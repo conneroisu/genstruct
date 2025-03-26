@@ -78,8 +78,6 @@ func TestCircusGeneration(t *testing.T) {
 		t.Errorf("Generated file is empty")
 	}
 
-	// Verify log contains expected messages
-	logOutput := buf.String()
 	expectedLogMsgs := []string{
 		"Starting code generation",
 		"Generating constants",

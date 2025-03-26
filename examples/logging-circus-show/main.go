@@ -1,7 +1,7 @@
+// Package main shows how to use the generator with a custom logger.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log/slog"
 	"os"
@@ -132,11 +132,6 @@ func main() {
 // createCustomLogger creates a logger with a specific format for this example
 func createCustomLogger() *slog.Logger {
 	// Get the current verbosity level from flags
-
-	// Only parse if not already parsed
-	if !flag.Parsed() {
-		flag.Parse()
-	}
 
 	// Determine log level
 	var level slog.Level
