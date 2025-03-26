@@ -10,9 +10,11 @@ import (
 
 // Tag represents a blog post tag
 type Tag struct {
-	ID   string // Unique identifier for the tag
-	Name string // Name of the tag
-	Slug string // URL-friendly slug for the tag
+	ID       string   // Unique identifier for the tag
+	Name     string   // Name of the tag
+	Slug     string   // URL-friendly slug for the tag
+	RelatedTagSlugs []string // List of related tag slugs (used one direction only to avoid circular references)
+	RelatedTags []*Tag   `structgen:"RelatedTagSlugs"` // Populated from RelatedTagSlugs
 }
 
 // Post represents a blog post
@@ -22,7 +24,7 @@ type Post struct {
 	Slug     string    // URL-friendly slug for the post
 	Content  string    // Content of the post
 	TagSlugs []string  // List of tag slugs
-	Tags     []Tag     `structgen:"TagSlugs"` // Populated from TagSlugs
+	Tags     []*Tag    `structgen:"TagSlugs"` // Populated from TagSlugs using pointers
 	Date     time.Time // Publication date
 }
 
@@ -31,24 +33,28 @@ func generateBlogData() error {
 	// Define our array of tag data
 	tags := []Tag{
 		{
-			ID:   "tag-001",
-			Name: "Go Programming",
-			Slug: "go-programming",
+			ID:       "tag-001",
+			Name:     "Go Programming",
+			Slug:     "go-programming",
+			RelatedTagSlugs: []string{"code-generation", "developer-tools"},
 		},
 		{
-			ID:   "tag-002",
-			Name: "Code Generation",
-			Slug: "code-generation",
+			ID:       "tag-002",
+			Name:     "Code Generation",
+			Slug:     "code-generation",
+			RelatedTagSlugs: []string{"developer-tools"},
 		},
 		{
-			ID:   "tag-003",
-			Name: "Tutorials",
-			Slug: "tutorials",
+			ID:       "tag-003",
+			Name:     "Tutorials",
+			Slug:     "tutorials",
+			RelatedTagSlugs: []string{"developer-tools"},
 		},
 		{
-			ID:   "tag-004",
-			Name: "Developer Tools",
-			Slug: "developer-tools",
+			ID:       "tag-004",
+			Name:     "Developer Tools",
+			Slug:     "developer-tools",
+			RelatedTagSlugs: []string{},
 		},
 	}
 
@@ -125,6 +131,6 @@ func main() {
 	fmt.Println("1. Import the generated file in your code by its package name")
 	fmt.Println("2. Use main.PostIntroductionToGo, main.PostCodeGenerationInGo, etc. to access specific posts")
 	fmt.Println("3. Use main.AllPosts slice for filtering and analysis")
-	fmt.Println("4. The Tags field in each post will be populated from TagSlugs referencing the tags by slug")
+	fmt.Println("4. The Tags field in each post will be populated with pointers to Tag objects referenced by slug")
+	fmt.Println("5. Similarly, the RelatedTags field in each Tag will be populated with pointers to related Tag objects")
 }
-

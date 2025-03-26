@@ -47,13 +47,13 @@ func TestBlogPostsGeneration(t *testing.T) {
 			message:  "Should contain AllPosts slice",
 		},
 		{
-			name:     "Has first post with tags",
-			expected: "Tags:     []Tag{Tag",
-			message:  "Should contain Tags field with array",
+			name:     "Has first post with pointer tags",
+			expected: "Tags:     []*Tag{&Tag",
+			message:  "Should contain Tags field with pointer array",
 		},
 		{
 			name:     "Complex post reference",
-			expected: "CodeGeneration",
+			expected: "TagCodeGeneration",
 			message:  "Should contain values from posts with multiple tags",
 		},
 	}
@@ -75,13 +75,18 @@ func TestBlogPostsGeneration(t *testing.T) {
 	}{
 		{
 			name:     "Tag reference values",
-			expected: "Name: \"Go Programming\"",
+			expected: "Name:            \"Go Programming\"",
 			message:  "Should contain tag values",
 		},
 		{
 			name:     "Second tag reference values",
-			expected: "Name: \"Tutorials\"",
+			expected: "Name:            \"Tutorials\"",
 			message:  "Should contain all tag values",
+		},
+		{
+			name:     "RelatedTags pointer field",
+			expected: "RelatedTags:     []*Tag{",
+			message:  "Should contain RelatedTags pointer field",
 		},
 	}
 	

@@ -36,6 +36,10 @@ type Generator struct {
 // 2. Generate constants, variables, and a slice for each referenced data set
 // 3. Create references between the primary data and the referenced data
 //
+// Reference fields can be either direct structs or pointers to structs:
+//   - []Tag `structgen:"TagSlugs"` - Direct struct references
+//   - []*Tag `structgen:"TagSlugs"` - Pointer-based struct references (recommended)
+//
 // Example usage:
 //
 //	generator, err := genstruct.NewGenerator(config, posts, tags)

@@ -49,7 +49,7 @@ err := generator.Generate()
 
 ## Struct Reference Embedding
 
-A powerful feature of genstruct is the ability to automatically populate fields in one struct by referencing values from another struct.
+A powerful feature of genstruct is the ability to automatically populate fields in one struct by referencing values from another struct. References can be created using either direct struct references (`[]Tag`) or pointer-based struct references (`[]*Tag`). Pointer-based references are recommended as they are more memory efficient and allow for more flexible data structures.
 
 ### How it works
 
@@ -72,7 +72,7 @@ type Post struct {
     ID       string
     Title    string
     TagSlugs []string  // Contains tag slugs
-    Tags     []Tag     `structgen:"TagSlugs"` // Will be populated from TagSlugs
+    Tags     []*Tag    `structgen:"TagSlugs"` // Will be populated from TagSlugs with pointers to Tag objects
 }
 
 // Create your data
@@ -101,7 +101,7 @@ The generated code will include:
 4. **Constant definitions for all Tag IDs**
 5. **Variable definitions for each Tag**
 6. **A slice containing all Tags**
-7. **Cross-references between Posts and Tags** (the `Tags` field in each Post will reference the generated Tag variables)
+7. **Cross-references between Posts and Tags** (the `Tags` field in each Post will contain pointers to the generated Tag variables)
 
 All of this is generated in a single file, with a single generator call.
 
