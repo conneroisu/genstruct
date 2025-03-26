@@ -1,6 +1,7 @@
 package genstruct
 
 import (
+	"log/slog"
 	"reflect"
 	"regexp"
 	"strings"
@@ -36,6 +37,10 @@ type Config struct {
 	// CustomVarNameFn is a custom function to generate variable names (optional)
 	// If provided, this takes precedence over IdentifierFields
 	CustomVarNameFn func(structValue reflect.Value) string
+	
+	// Logger is the slog.Logger instance to use for logging
+	// If not provided, defaults to a no-op logger
+	Logger *slog.Logger
 }
 
 // slugToIdentifier converts a string to a valid Go identifier
