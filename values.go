@@ -272,12 +272,11 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 
 				// Try each possible identifier field
 				for _, idField := range g.Config.IdentifierFields {
-					refIdField := refStruct.FieldByName(idField)
+					refIDField := refStruct.FieldByName(idField)
 
-
-					if refIdField.IsValid() &&
-						refIdField.Kind() == reflect.String &&
-						refIdField.String() == idValue {
+					if refIDField.IsValid() &&
+						refIDField.Kind() == reflect.String &&
+						refIDField.String() == idValue {
 
 						// Found a matching reference
 						// Get a name for the referenced variable
