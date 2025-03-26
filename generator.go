@@ -15,8 +15,8 @@ import (
 // Generator is responsible for generating code for static struct arrays
 type Generator struct {
 	Config Config
-	Data   any             // The primary array of structs to generate code for
-	Refs   map[string]any  // Additional arrays that can be referenced
+	Data   any            // The primary array of structs to generate code for
+	Refs   map[string]any // Additional arrays that can be referenced
 	File   *jen.File
 }
 
@@ -85,132 +85,62 @@ func NewGenerator(config Config, data any, refs ...any) (*Generator, error) {
 	}, nil
 }
 
-// enhanceConfig fills in missing configuration values using reflection and validates the configuration
+// enhanceConfig fills in missing configuration values using reflection
 func enhanceConfig(config Config, data any) (Config, error) {
 	// Get the element type from the data
 	dataValue := reflect.ValueOf(data)
 	if dataValue.Kind() != reflect.Slice && dataValue.Kind() != reflect.Array {
-		return config, NonSliceOrArrayError{dataValue.Kind()}
-	}
-	
-	// Make sure we have at least one element to analyze
-	if dataValue.Len() == 0 {
-		return config, EmptyError{}
-	}
-	
-	firstElem := dataValue.Index(0)
-	if firstElem.Kind() != reflect.Struct {
-		return config, InvalidTypeError{firstElem.Kind()}
-	}
-	
-	// Get the struct type
-	structType := firstElem.Type()
-	typeName := structType.Name()
-	
-	// Check if we have an anonymous/unnamed struct type
-	if typeName == "" {
-		return config, fmt.Errorf("anonymous struct types are not supported, please define a named struct type")
-	}
-	
-	// Infer TypeName if not specified
-	if config.TypeName == "" {
-		config.TypeName = typeName
-	}
-	
-	// Infer ConstantIdent if not specified
-	if config.ConstantIdent == "" {
-		config.ConstantIdent = config.TypeName
-	}
-	
-	// Infer VarPrefix if not specified
-	if config.VarPrefix == "" {
-		config.VarPrefix = config.TypeName
-	}
-	
-	// Infer OutputFile if not specified
-	if config.OutputFile == "" {
-		config.OutputFile = strings.ToLower(config.TypeName) + "_generated.go"
-	}
-	
-	// Set default identifier fields if none provided
-	if config.IdentifierFields == nil {
-		config.IdentifierFields = []string{"ID", "Name", "Slug", "Title", "Key", "Code"}
-	}
-	
-	// If PackageName is not specified, use "generated"
-	if config.PackageName == "" {
-		config.PackageName = "generated"
-	}
-	
-	// Ensure required fields are set
-	if config.TypeName == "" {
-		return config, fmt.Errorf("TypeName is required and could not be inferred")
-	}
-	
-	if config.OutputFile == "" {
-		return config, fmt.Errorf("OutputFile is required and could not be inferred")
-	}
-	
-	return config, nil
-}
-
-
-// enhanceConfig fills in missing configuration values using reflection
-func enhanceConfig(config Config, data any) Config {
-	// Get the element type from the data
-	dataValue := reflect.ValueOf(data)
-	if dataValue.Kind() != reflect.Slice && dataValue.Kind() != reflect.Array {
 		// Can't determine type from non-slice/array, return as is
-		return config
+		return config, InvalidTypeError{Kind: dataValue.Kind()}
 	}
-	
+
 	// Make sure we have at least one element to analyze
 	if dataValue.Len() == 0 {
 		// Can't determine type from empty slice, return as is
-		return config
+		return config, EmptyError{}
 	}
-	
+
 	firstElem := dataValue.Index(0)
 	if firstElem.Kind() != reflect.Struct {
 		// Only struct slices are supported, return as is
-		return config
+		return config, InvalidTypeError{Kind: firstElem.Kind()}
 	}
-	
+
 	// Get the struct type
 	structType := firstElem.Type()
 	typeName := structType.Name()
-	
+
 	// Infer TypeName if not specified
 	if config.TypeName == "" {
 		config.TypeName = typeName
 	}
-	
+
 	// Infer ConstantIdent if not specified
 	if config.ConstantIdent == "" {
 		config.ConstantIdent = config.TypeName
 	}
-	
+
 	// Infer VarPrefix if not specified
 	if config.VarPrefix == "" {
 		config.VarPrefix = config.TypeName
 	}
-	
+
 	// Infer OutputFile if not specified
 	if config.OutputFile == "" {
 		config.OutputFile = strings.ToLower(config.TypeName) + "_generated.go"
 	}
-	
+
 	// Set default identifier fields if none provided
 	if config.IdentifierFields == nil {
 		config.IdentifierFields = []string{"ID", "Name", "Slug", "Title", "Key", "Code"}
 	}
-	
+
 	// If PackageName is not specified, use "generated"
 	if config.PackageName == "" {
 		config.PackageName = "generated"
 	}
-	
-	return config
+
+	return config, nil
 }
 
 // Generate performs the code generation for both primary data and reference data
@@ -258,7 +188,7 @@ func (g *Generator) Generate() error {
 
 	// Generate a slice with all structs
 	g.generateSlice(dataValue)
-	
+
 	// Process reference datasets to generate their constants and variables
 	// This ensures that all referenced types (like Tag in Post.Tags) are properly defined
 	// in the generated code, making the references fully usable.
@@ -273,20 +203,20 @@ func (g *Generator) Generate() error {
 					originalTypeName := g.Config.TypeName
 					originalVarPrefix := g.Config.VarPrefix
 					originalConstantIdent := g.Config.ConstantIdent
-					
+
 					// Temporarily set config values for the reference type
 					// This ensures that constants and variables are named correctly
 					// (e.g., TagGoProgramming instead of PostGoProgramming)
 					g.Config.TypeName = typeName
 					g.Config.VarPrefix = typeName
 					g.Config.ConstantIdent = typeName
-					
+
 					// Generate constants, variables, and slice for this reference dataset
 					// using the same generation methods as for the primary dataset
 					g.generateConstants(refDataValue)
 					g.generateVariables(refDataValue)
 					g.generateSlice(refDataValue)
-					
+
 					// Restore original config values for processing the next reference dataset
 					g.Config.TypeName = originalTypeName
 					g.Config.VarPrefix = originalVarPrefix
@@ -301,13 +231,13 @@ func (g *Generator) Generate() error {
 	if err := g.File.Render(buf); err != nil {
 		return err
 	}
-	
+
 	// Format the code with gofmt
 	formatted, err := format.Source(buf.Bytes())
 	if err != nil {
 		return err
 	}
-	
+
 	// Save the formatted code to file
 	return os.WriteFile(g.Config.OutputFile, formatted, 0644)
 }
