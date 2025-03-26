@@ -1,5 +1,5 @@
 {
-  description = "Hardware design using Go.";
+  description = "Programatically generate static structs in Go.";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -95,20 +95,8 @@
         scripts;
     in {
       packages = {
-        gohard = buildWithSpecificGo {
-          pname = "gohard";
-          version = "0.1.0";
-          src = ./.;
-          vendorHash = "sha256-yGfxqXC+qib++4FH5SKsuIKHH82cl4/kB3mRMNFOYlk=";
-          nativeBuildInputs = [];
-          meta = with pkgs.lib; {
-            description = "Go Hard CLI";
-            homepage = "https://github.com/conneroisu/gohard";
-            license = licenses.mit;
-          };
-        };
         doc = pkgs.stdenv.mkDerivation {
-          pname = "gohard-docs";
+          pname = "genstruct-docs";
           version = "0.1";
           src = ./.;
           nativeBuildInputs = with pkgs; [
