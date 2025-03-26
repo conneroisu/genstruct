@@ -19,6 +19,22 @@ The `structgen` tag tells `genstruct` that:
 1. The value of this field (`Tags`) should be populated based on the value of another field (`TagSlugs`)
 2. It should look up matching values in the reference data provided
 
+When references are resolved, genstruct now generates proper variable references instead of duplicating structs:
+
+```go
+// Instead of duplicating the entire Tag struct:
+Tags: []Tag{Tag{
+    ID:   "tag-001",
+    Name: "Go Programming",
+    Slug: "go-programming",
+}},
+
+// It now uses references to pre-generated variables:
+Tags: []Tag{TagGoProgramming, TagTutorials},
+```
+
+This improves efficiency and maintainability of the generated code.
+
 ## Supported Reference Types
 
 Currently, `genstruct` supports two types of references:
@@ -79,9 +95,32 @@ posts := []Post{
     },
 }
 
-// Generate code with both datasets
-generator := genstruct.NewGenerator(config, posts, tags)
-err := generator.Generate()
+// Configure the generation for tags first
+tagConfig := genstruct.Config{
+    PackageName: "main",
+    OutputFile:  "tags.go",
+}
+tagGenerator, err := genstruct.NewGenerator(tagConfig, tags)
+if err != nil {
+    // handle error
+}
+
+err = tagGenerator.Generate()
+if err != nil {
+    // handle error
+}
+
+// Then generate posts with references to tags
+postConfig := genstruct.Config{
+    PackageName: "main", 
+    OutputFile:  "posts.go",
+}
+generator, err := genstruct.NewGenerator(postConfig, posts, tags)
+if err != nil {
+    // handle error
+}
+
+err = generator.Generate()
 ```
 
 ## How genstruct Finds Matching References

@@ -94,7 +94,16 @@ generator := genstruct.NewGenerator(config, posts, tags)
 err := generator.Generate()
 ```
 
-The generated code will include Posts with their Tags field populated from the referenced Tags.
+The generated code will include:
+1. Constant definitions for all Post IDs
+2. Variable definitions for each Post
+3. A slice containing all Posts 
+4. **Constant definitions for all Tag IDs**
+5. **Variable definitions for each Tag**
+6. **A slice containing all Tags**
+7. **Cross-references between Posts and Tags** (the `Tags` field in each Post will reference the generated Tag variables)
+
+All of this is generated in a single file, with a single generator call.
 
 ## Config Options
 

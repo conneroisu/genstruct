@@ -93,7 +93,10 @@ func generateAnimalData() error {
 	}
 
 	// Create a new generator with our config and animal data
-	generator := genstruct.NewGenerator(config, animals)
+	generator, err := genstruct.NewGenerator(config, animals)
+	if err != nil {
+		return fmt.Errorf("error creating generator: %w", err)
+	}
 
 	// Generate the code
 	return generator.Generate()

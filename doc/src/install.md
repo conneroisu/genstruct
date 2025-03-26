@@ -76,21 +76,23 @@ func main() {
         // Add more animals...
     }
     
-    // Configure genstruct
+    // Configure genstruct (minimal configuration - many values are inferred automatically)
     config := genstruct.Config{
-        PackageName:      "zoo",         // Target package name
-        TypeName:         "Animal",      // The struct type name
-        ConstantIdent:    "Animal",      // Prefix for constants
-        VarPrefix:        "Animal",      // Prefix for variables
-        OutputFile:       "animals.go",  // Output file name
-        IdentifierFields: []string{"Name", "Species"}, // Fields used for naming
+        PackageName: "zoo",        // Target package name
+        OutputFile:  "animals.go", // Output file name
+        // TypeName, ConstantIdent, and VarPrefix will be inferred as "Animal"
+        // Customize which fields to prioritize for naming
+        IdentifierFields: []string{"Name", "Species"},
     }
     
     // Create generator
-    generator := genstruct.NewGenerator(config, animals)
+    generator, err := genstruct.NewGenerator(config, animals)
+    if err != nil {
+        panic(err)
+    }
     
     // Generate the code
-    err := generator.Generate()
+    err = generator.Generate()
     if err != nil {
         panic(err)
     }
@@ -171,17 +173,34 @@ generator := genstruct.NewGenerator(config, posts, tags)
 err := generator.Generate()
 ```
 
-## Common Configuration Options
+## Configuration Options
 
-Here are some common configuration options:
+Configuration is simplified with auto-inference of many values. Here are the available options:
 
-| Option | Description | Example |
-|--------|-------------|---------|
-| PackageName | Target package name | `"models"` |
-| TypeName | Struct type name | `"User"` |
-| ConstantIdent | Prefix for constants | `"User"` |
-| VarPrefix | Prefix for variables | `"User"` |
-| OutputFile | Output file path | `"users.go"` |
-| IdentifierFields | Priority fields for naming | `[]string{"ID", "Username"}` |
+| Option | Description | Default | Example |
+|--------|-------------|---------|---------|
+| PackageName | Target package name | `"generated"` | `"models"` |
+| TypeName | Struct type name | *Inferred from data* | `"User"` |
+| ConstantIdent | Prefix for constants | *Same as TypeName* | `"User"` |
+| VarPrefix | Prefix for variables | *Same as TypeName* | `"User"` |
+| OutputFile | Output file path | *typename_generated.go* | `"users.go"` |
+| IdentifierFields | Priority fields for naming | `[]string{"ID", "Name", "Slug", "Title", "Key", "Code"}` | `[]string{"ID", "Username"}` |
+| CustomVarNameFn | Custom naming function | *None* | *Custom function* |
+
+In many cases, you only need to specify the `PackageName` and `OutputFile` - everything else will be inferred automatically:
+
+```go
+// Minimal configuration example
+config := genstruct.Config{
+    PackageName: "myapp",
+    OutputFile:  "users_generated.go",
+}
+
+// The TypeName will be inferred as "User" from the data
+generator, err := genstruct.NewGenerator(config, users)
+if err != nil {
+    // handle error
+}
+```
 
 For more examples, see the [examples directory](https://github.com/conneroisu/genstruct/tree/main/examples) in the repository.

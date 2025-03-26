@@ -131,7 +131,7 @@ func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.V
 
 	// Create a Dict for each field in the struct
 	dict := jen.Dict{}
-	
+
 	// Track fields that need to be processed in a second pass (with structgen tag)
 	type deferredField struct {
 		fieldIndex int
@@ -149,10 +149,10 @@ func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.V
 		if !fieldType.IsExported() {
 			continue
 		}
-		
+
 		// Check if this field has a structgen tag
 		structgenVal, hasStructgenTag := fieldType.Tag.Lookup("structgen")
-		
+
 		if hasStructgenTag && structgenVal != "" {
 			// Add to deferred fields for second pass
 			deferredFields = append(deferredFields, deferredField{
@@ -166,7 +166,7 @@ func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.V
 		// Add the regular field to the dict
 		dict[jen.Id(fieldType.Name)] = g.getValueStatement(field)
 	}
-	
+
 	// Second pass: process fields with structgen tag
 	for _, df := range deferredFields {
 		value := g.generateStructGenField(structValue, df.srcField, df.fieldType)
@@ -186,8 +186,8 @@ func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.V
 // that can be used to look up matching structs in the reference datasets.
 //
 // Supported reference patterns:
-//  - String to Struct: A string field (e.g., "AuthorID") referencing a single struct
-//  - String Slice to Struct Slice: A slice of strings (e.g., "TagSlugs") referencing a slice of structs
+//   - String to Struct: A string field (e.g., "AuthorID") referencing a single struct
+//   - String Slice to Struct Slice: A slice of strings (e.g., "TagSlugs") referencing a slice of structs
 //
 // Parameters:
 //   - structValue: The struct instance being processed
@@ -195,41 +195,41 @@ func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.V
 //   - targetField: The field to populate with references
 func (g *Generator) generateStructGenField(structValue reflect.Value, srcFieldName string, targetField reflect.StructField) *jen.Statement {
 	structType := structValue.Type()
-	
+
 	// Find the source field
 	srcField, found := structType.FieldByName(srcFieldName)
 	if !found {
 		// Source field not found
 		return nil
 	}
-	
+
 	// Get the source field's value
 	srcValue := structValue.FieldByName(srcFieldName)
 	if !srcValue.IsValid() {
 		return nil
 	}
-	
+
 	// Determine the target type
 	targetType := targetField.Type
-	
+
 	// Check for slice of structs referencing a string slice
-	if targetType.Kind() == reflect.Slice && 
-	   targetType.Elem().Kind() == reflect.Struct && 
-	   srcField.Type.Kind() == reflect.Slice && 
-	   srcField.Type.Elem().Kind() == reflect.String {
-		
+	if targetType.Kind() == reflect.Slice &&
+		targetType.Elem().Kind() == reflect.Struct &&
+		srcField.Type.Kind() == reflect.Slice &&
+		srcField.Type.Elem().Kind() == reflect.String {
+
 		// We need to look up structs by ID or another field
 		return g.generateReferenceSlice(srcValue, targetType)
 	}
-	
+
 	// Check for single struct referencing a string
-	if targetType.Kind() == reflect.Struct && 
-	   srcField.Type.Kind() == reflect.String {
-		
+	if targetType.Kind() == reflect.Struct &&
+		srcField.Type.Kind() == reflect.String {
+
 		// We need to look up one struct by ID or another field
 		return g.generateReferenceSingle(srcValue, targetType)
 	}
-	
+
 	// Unsupported reference type
 	return nil
 }
@@ -245,44 +245,44 @@ func (g *Generator) generateStructGenField(structValue reflect.Value, srcFieldNa
 func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType reflect.Type) *jen.Statement {
 	// Get the target struct type name
 	structTypeName := targetType.Elem().Name()
-	
+
 	// Check if we have this reference type
 	refDataObj, hasRef := g.Refs[structTypeName]
 	if !hasRef {
 		// We don't have this reference data
 		return jen.Index().Add(jen.Id(structTypeName)).Values()
 	}
-	
+
 	// Convert to reflect.Value
 	refData := reflect.ValueOf(refDataObj)
 	if refData.Kind() != reflect.Slice && refData.Kind() != reflect.Array {
 		// Reference isn't a slice/array
 		return jen.Index().Add(jen.Id(structTypeName)).Values()
 	}
-	
+
 	// Now create a slice with all matching references
 	return jen.Index().Add(jen.Id(structTypeName)).ValuesFunc(func(group *jen.Group) {
 		// For each source ID
 		for i := range srcValue.Len() {
 			idValue := srcValue.Index(i).String()
-			
+
 			// Try to find a matching reference struct
 			for j := range refData.Len() {
 				refStruct := refData.Index(j)
-				
+
 				// Try each possible identifier field
 				for _, idField := range g.Config.IdentifierFields {
 					refIdField := refStruct.FieldByName(idField)
-					
-					if refIdField.IsValid() && 
-					   refIdField.Kind() == reflect.String && 
-					   refIdField.String() == idValue {
-						
+
+					if refIdField.IsValid() &&
+						refIdField.Kind() == reflect.String &&
+						refIdField.String() == idValue {
+
 						// Found a matching reference
 						// Get a name for the referenced variable
 						identValue := g.getStructIdentifier(refStruct)
 						refVarName := structTypeName + slugToIdentifier(identValue)
-						
+
 						// Use a direct reference to the variable (e.g., TagGoProgramming)
 						// This assumes the Tag variables have already been generated
 						group.Add(jen.Id(refVarName))
@@ -305,36 +305,36 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 func (g *Generator) generateReferenceSingle(srcValue reflect.Value, targetType reflect.Type) *jen.Statement {
 	// Get the target struct type name
 	structTypeName := targetType.Name()
-	
+
 	// Check if we have this reference type
 	refDataObj, hasRef := g.Refs[structTypeName]
 	if !hasRef {
 		// We don't have this reference data
 		return jen.Id(structTypeName).Values()
 	}
-	
+
 	// Convert to reflect.Value
 	refData := reflect.ValueOf(refDataObj)
 	if refData.Kind() != reflect.Slice && refData.Kind() != reflect.Array {
 		// Reference isn't a slice/array
 		return jen.Id(structTypeName).Values()
 	}
-	
+
 	// Get ID value from source
 	idValue := srcValue.String()
-	
+
 	// Try to find a matching reference struct
 	for j := range refData.Len() {
 		refStruct := refData.Index(j)
-		
+
 		// Try each possible identifier field
 		for _, idField := range g.Config.IdentifierFields {
-			refIdField := refStruct.FieldByName(idField)
-			
-			if refIdField.IsValid() && 
-			   refIdField.Kind() == reflect.String && 
-			   refIdField.String() == idValue {
-				
+			refIDField := refStruct.FieldByName(idField)
+
+			if refIDField.IsValid() &&
+				refIDField.Kind() == reflect.String &&
+				refIDField.String() == idValue {
+
 				// Found match - return it
 				return jen.Id(structTypeName).ValuesFunc(func(group *jen.Group) {
 					g.generateStructValues(group, refStruct)
@@ -342,7 +342,7 @@ func (g *Generator) generateReferenceSingle(srcValue reflect.Value, targetType r
 			}
 		}
 	}
-	
+
 	// No match found
 	return jen.Id(structTypeName).Values()
 }
