@@ -61,7 +61,7 @@ func NewGenerator(config Config, data any, refs ...any) (*Generator, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Create a map of reference datasets
 	refMap := make(map[string]any)
 	for i, ref := range refs {
@@ -152,6 +152,65 @@ func enhanceConfig(config Config, data any) (Config, error) {
 	}
 	
 	return config, nil
+}
+
+
+// enhanceConfig fills in missing configuration values using reflection
+func enhanceConfig(config Config, data any) Config {
+	// Get the element type from the data
+	dataValue := reflect.ValueOf(data)
+	if dataValue.Kind() != reflect.Slice && dataValue.Kind() != reflect.Array {
+		// Can't determine type from non-slice/array, return as is
+		return config
+	}
+	
+	// Make sure we have at least one element to analyze
+	if dataValue.Len() == 0 {
+		// Can't determine type from empty slice, return as is
+		return config
+	}
+	
+	firstElem := dataValue.Index(0)
+	if firstElem.Kind() != reflect.Struct {
+		// Only struct slices are supported, return as is
+		return config
+	}
+	
+	// Get the struct type
+	structType := firstElem.Type()
+	typeName := structType.Name()
+	
+	// Infer TypeName if not specified
+	if config.TypeName == "" {
+		config.TypeName = typeName
+	}
+	
+	// Infer ConstantIdent if not specified
+	if config.ConstantIdent == "" {
+		config.ConstantIdent = config.TypeName
+	}
+	
+	// Infer VarPrefix if not specified
+	if config.VarPrefix == "" {
+		config.VarPrefix = config.TypeName
+	}
+	
+	// Infer OutputFile if not specified
+	if config.OutputFile == "" {
+		config.OutputFile = strings.ToLower(config.TypeName) + "_generated.go"
+	}
+	
+	// Set default identifier fields if none provided
+	if config.IdentifierFields == nil {
+		config.IdentifierFields = []string{"ID", "Name", "Slug", "Title", "Key", "Code"}
+	}
+	
+	// If PackageName is not specified, use "generated"
+	if config.PackageName == "" {
+		config.PackageName = "generated"
+	}
+	
+	return config
 }
 
 // Generate performs the code generation for both primary data and reference data

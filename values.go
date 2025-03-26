@@ -274,6 +274,7 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 				for _, idField := range g.Config.IdentifierFields {
 					refIdField := refStruct.FieldByName(idField)
 
+
 					if refIdField.IsValid() &&
 						refIdField.Kind() == reflect.String &&
 						refIdField.String() == idValue {
