@@ -1,8 +1,12 @@
 package genstruct
 
 import (
+	"bytes"
 	"fmt"
+	"go/format"
+	"os"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/dave/jennifer/jen"
@@ -30,11 +34,16 @@ type Generator struct {
 // Example usage:
 //
 //	generator := genstruct.NewGenerator(config, posts, tags)
+//
+// Many configuration options can be omitted and will be inferred automatically:
+//   - TypeName: Inferred from the struct type in the data slice
+//   - ConstantIdent: Defaults to TypeName if not specified
+//   - VarPrefix: Defaults to TypeName if not specified
+//   - OutputFile: Defaults to lowercase(typename_generated.go) if not specified
+//   - IdentifierFields: Has reasonable defaults if not specified
 func NewGenerator(config Config, data any, refs ...any) *Generator {
-	// Set default identifier fields if none provided
-	if config.IdentifierFields == nil {
-		config.IdentifierFields = []string{"ID", "Name", "Slug", "Title", "Key", "Code"}
-	}
+	// Validate and enhance the configuration with inferred values
+	config = enhanceConfig(config, data)
 	
 	// Create a map of reference datasets
 	refMap := make(map[string]any)
@@ -57,6 +66,64 @@ func NewGenerator(config Config, data any, refs ...any) *Generator {
 		Refs:   refMap,
 		File:   jen.NewFile(config.PackageName),
 	}
+}
+
+// enhanceConfig fills in missing configuration values using reflection
+func enhanceConfig(config Config, data any) Config {
+	// Get the element type from the data
+	dataValue := reflect.ValueOf(data)
+	if dataValue.Kind() != reflect.Slice && dataValue.Kind() != reflect.Array {
+		// Can't determine type from non-slice/array, return as is
+		return config
+	}
+	
+	// Make sure we have at least one element to analyze
+	if dataValue.Len() == 0 {
+		// Can't determine type from empty slice, return as is
+		return config
+	}
+	
+	firstElem := dataValue.Index(0)
+	if firstElem.Kind() != reflect.Struct {
+		// Only struct slices are supported, return as is
+		return config
+	}
+	
+	// Get the struct type
+	structType := firstElem.Type()
+	typeName := structType.Name()
+	
+	// Infer TypeName if not specified
+	if config.TypeName == "" {
+		config.TypeName = typeName
+	}
+	
+	// Infer ConstantIdent if not specified
+	if config.ConstantIdent == "" {
+		config.ConstantIdent = config.TypeName
+	}
+	
+	// Infer VarPrefix if not specified
+	if config.VarPrefix == "" {
+		config.VarPrefix = config.TypeName
+	}
+	
+	// Infer OutputFile if not specified
+	if config.OutputFile == "" {
+		config.OutputFile = strings.ToLower(config.TypeName) + "_generated.go"
+	}
+	
+	// Set default identifier fields if none provided
+	if config.IdentifierFields == nil {
+		config.IdentifierFields = []string{"ID", "Name", "Slug", "Title", "Key", "Code"}
+	}
+	
+	// If PackageName is not specified, use "generated"
+	if config.PackageName == "" {
+		config.PackageName = "generated"
+	}
+	
+	return config
 }
 
 // Generate performs the code generation
@@ -94,8 +161,20 @@ func (g *Generator) Generate() error {
 	// Generate a slice with all structs
 	g.generateSlice(dataValue)
 
-	// Save the generated code to file
-	return g.File.Save(g.Config.OutputFile)
+	// Generate the code as a string
+	buf := &bytes.Buffer{}
+	if err := g.File.Render(buf); err != nil {
+		return err
+	}
+	
+	// Format the code with gofmt
+	formatted, err := format.Source(buf.Bytes())
+	if err != nil {
+		return err
+	}
+	
+	// Save the formatted code to file
+	return os.WriteFile(g.Config.OutputFile, formatted, 0644)
 }
 
 // getStructIdentifier returns a string to identify this struct instance

@@ -278,10 +278,14 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 					   refIdField.Kind() == reflect.String && 
 					   refIdField.String() == idValue {
 						
-						// Found match - add it to the result
-						group.Add(jen.Id(structTypeName).ValuesFunc(func(innerGroup *jen.Group) {
-							g.generateStructValues(innerGroup, refStruct)
-						}))
+						// Found a matching reference
+						// Get a name for the referenced variable
+						identValue := g.getStructIdentifier(refStruct)
+						refVarName := structTypeName + slugToIdentifier(identValue)
+						
+						// Use a direct reference to the variable (e.g., TagGoProgramming)
+						// This assumes the Tag variables have already been generated
+						group.Add(jen.Id(refVarName))
 						break
 					}
 				}

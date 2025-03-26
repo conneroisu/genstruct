@@ -7,16 +7,33 @@ import (
 )
 
 // Config holds the configuration for code generation of static structs and arrays.
+// Many fields are optional and will be automatically inferred if not specified.
 type Config struct {
-	// PackageName defines the Target package name (optional)
-	// If not provided, the package name will be the same as the given struct.
-	PackageName      string
-	TypeName         string   // The name of the struct type to generate
-	ConstantIdent    string   // Prefix for constants (e.g., "Post" for "PostMyPostID")
-	VarPrefix        string   // Prefix for variables (e.g., "Post" for "PostMyPost")
-	OutputFile       string   // Output file name
-	IdentifierFields []string // Fields to try using for naming, in priority order (optional)
-	// Custom function to generate variable names (optional)
+	// PackageName defines the target package name
+	// If not provided, defaults to "generated"
+	PackageName string
+
+	// TypeName is the name of the struct type to generate
+	// If not provided, inferred from the struct type in the data
+	TypeName string
+	
+	// ConstantIdent is the prefix for constants (e.g., "Post" for "PostMyPostID")
+	// If not provided, defaults to the TypeName
+	ConstantIdent string
+	
+	// VarPrefix is the prefix for variables (e.g., "Post" for "PostMyPost")
+	// If not provided, defaults to the TypeName
+	VarPrefix string
+	
+	// OutputFile is the output file name
+	// If not provided, defaults to lowercase(typename_generated.go)
+	OutputFile string
+	
+	// IdentifierFields are the fields to try using for naming, in priority order
+	// If not provided, defaults to ["ID", "Name", "Slug", "Title", "Key", "Code"]
+	IdentifierFields []string
+	
+	// CustomVarNameFn is a custom function to generate variable names (optional)
 	// If provided, this takes precedence over IdentifierFields
 	CustomVarNameFn func(structValue reflect.Value) string
 }
