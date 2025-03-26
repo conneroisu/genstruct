@@ -11,20 +11,50 @@ import (
 // Generator is responsible for generating code for static struct arrays
 type Generator struct {
 	Config Config
-	Data   any // The array of structs to generate code for
+	Data   any             // The primary array of structs to generate code for
+	Refs   map[string]any  // Additional arrays that can be referenced
 	File   *jen.File
 }
 
-// NewGenerator creates a new generator instance
-func NewGenerator(config Config, data any) *Generator {
+// NewGenerator creates a new generator instance with support for struct references
+//
+// Parameters:
+//   - config: Configuration options for code generation
+//   - data: The primary array of structs to generate code for
+//   - refs: Optional additional arrays that can be referenced by the primary data
+//
+// The refs parameters enable the use of struct tags with the `structgen` tag to reference
+// data between structs. For example, a Post struct with a TagSlugs field can reference
+// Tag structs using the tag `structgen:"TagSlugs"`.
+//
+// Example usage:
+//
+//	generator := genstruct.NewGenerator(config, posts, tags)
+func NewGenerator(config Config, data any, refs ...any) *Generator {
 	// Set default identifier fields if none provided
 	if config.IdentifierFields == nil {
 		config.IdentifierFields = []string{"ID", "Name", "Slug", "Title", "Key", "Code"}
+	}
+	
+	// Create a map of reference datasets
+	refMap := make(map[string]any)
+	for i, ref := range refs {
+		// Get type name for this dataset
+		refType := reflect.TypeOf(ref)
+		if refType.Kind() == reflect.Slice || refType.Kind() == reflect.Array {
+			elemType := refType.Elem()
+			if elemType.Kind() == reflect.Struct {
+				refMap[elemType.Name()] = ref
+			} else {
+				refMap[fmt.Sprintf("Ref%d", i)] = ref
+			}
+		}
 	}
 
 	return &Generator{
 		Config: config,
 		Data:   data,
+		Refs:   refMap,
 		File:   jen.NewFile(config.PackageName),
 	}
 }

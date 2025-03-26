@@ -24,3 +24,6 @@ go.work.sum
 # env file
 .env
 .direnv
+package.json
+package-lock.json
+node_modules
