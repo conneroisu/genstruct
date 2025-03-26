@@ -1,0 +1,56 @@
+package genstruct
+
+import (
+	"reflect"
+
+	"github.com/dave/jennifer/jen"
+)
+
+// getTypeStatement converts a reflect.Type to a jen.Statement
+func (g *Generator) getTypeStatement(t reflect.Type) *jen.Statement {
+	switch t.Kind() {
+	case reflect.Bool:
+		return jen.Bool()
+	case reflect.Int,
+		reflect.Int8,
+		reflect.Int16,
+		reflect.Int32,
+		reflect.Int64:
+		return jen.Id(t.String())
+	case reflect.Uint,
+		reflect.Uint8,
+		reflect.Uint16,
+		reflect.Uint32,
+		reflect.Uint64,
+		reflect.Uintptr:
+		return jen.Id(t.String())
+	case reflect.Float32, reflect.Float64:
+		return jen.Id(t.String())
+	case reflect.Complex64, reflect.Complex128:
+		return jen.Id(t.String())
+	case reflect.Array, reflect.Slice:
+		return jen.Index().Add(g.getTypeStatement(t.Elem()))
+	case reflect.Map:
+		return jen.Map(
+			g.getTypeStatement(t.Key()),
+		).Add(g.getTypeStatement(t.Elem()))
+	case reflect.String:
+		return jen.String()
+	case reflect.Struct:
+		// Handle special types like time.Time
+		if t.String() == "time.Time" {
+			return jen.Qual("time", "Time")
+		}
+		return jen.Id(t.Name())
+	case reflect.Pointer:
+		return jen.Op("*").Add(g.getTypeStatement(t.Elem()))
+	case reflect.Interface:
+		if t.NumMethod() == 0 {
+			return jen.Interface() // empty interface
+		}
+		// Complex interfaces would need more handling
+		return jen.Interface()
+	default:
+		return jen.Id(t.String())
+	}
+}
