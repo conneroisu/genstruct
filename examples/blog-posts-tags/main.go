@@ -80,22 +80,23 @@ func generateBlogData() error {
 		},
 	}
 
-	// Configure genstruct
-	config := genstruct.Config{
-		PackageName:      "main",                // Target package name
-		TypeName:         "Post",                // The struct type name
-		ConstantIdent:    "Post",                // Prefix for constants
-		VarPrefix:        "Post",                // Prefix for variables
-		OutputFile:       "blog_posts.go",       // Output file name
-		IdentifierFields: []string{"Slug", "ID"}, // Fields to use for naming variables
+	// Configure and generate for both post and tag data in one step
+	genConfig := genstruct.Config{
+		PackageName:      "main",
+		OutputFile:       "blog_generated.go",
+		IdentifierFields: []string{"Slug", "ID"},
+	}
+	gen, err := genstruct.NewGenerator(genConfig, posts, tags)
+	if err != nil {
+		return fmt.Errorf("error creating generator: %w", err)
+	}
+	err = gen.Generate()
+	if err != nil {
+		return fmt.Errorf("error generating: %w", err)
 	}
 
-	// Create a new generator with our config, posts, and tags
-	// The tags are passed as a reference dataset
-	generator := genstruct.NewGenerator(config, posts, tags)
-
-	// Generate the code
-	return generator.Generate()
+	// Return nil as we've handled the generation
+	return nil
 }
 
 func main() {
@@ -107,10 +108,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Successfully generated static blog post data in blog_posts.go")
+	fmt.Println("Successfully generated static blog post data in blog_generated.go")
 
 	// Show the content of the generated file
-	content, err := os.ReadFile("blog_posts.go")
+	content, err := os.ReadFile("blog_generated.go")
 	if err != nil {
 		fmt.Printf("Error reading generated file: %v\n", err)
 		os.Exit(1)
@@ -126,3 +127,4 @@ func main() {
 	fmt.Println("3. Use main.AllPosts slice for filtering and analysis")
 	fmt.Println("4. The Tags field in each post will be populated from TagSlugs referencing the tags by slug")
 }
+

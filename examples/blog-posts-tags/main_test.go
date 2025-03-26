@@ -14,15 +14,19 @@ func TestBlogPostsGeneration(t *testing.T) {
 	}
 
 	// Read the generated file
-	content, err := os.ReadFile("blog_posts.go")
+	content, err := os.ReadFile("blog_generated.go")
 	if err != nil {
-		t.Fatalf("Error reading generated file: %v", err)
+		t.Fatalf("Error reading blog_generated.go file: %v", err)
 	}
 
 	contentStr := string(content)
+	
+	// For compatibility with test, derive blog post and tags content from the single file
+	blogPostStr := contentStr
+	blogTagsStr := contentStr
 
 	// Test that generated code contains expected elements
-	expectedTests := []struct {
+	expectedBlogPostTests := []struct {
 		name     string
 		expected string
 		message  string
@@ -44,18 +48,8 @@ func TestBlogPostsGeneration(t *testing.T) {
 		},
 		{
 			name:     "Has first post with tags",
-			expected: "Tags: []Tag{",
+			expected: "Tags:     []Tag{Tag",
 			message:  "Should contain Tags field with array",
-		},
-		{
-			name:     "Tag reference values",
-			expected: "Name: \"Go Programming\"",
-			message:  "Should contain referenced tag values",
-		},
-		{
-			name:     "Second tag reference values",
-			expected: "Name: \"Tutorials\"",
-			message:  "Should contain all referenced tag values",
 		},
 		{
 			name:     "Complex post reference",
@@ -64,10 +58,38 @@ func TestBlogPostsGeneration(t *testing.T) {
 		},
 	}
 
-	for _, tc := range expectedTests {
+	// Test the blog_posts.go file
+	for _, tc := range expectedBlogPostTests {
 		t.Run(tc.name, func(t *testing.T) {
-			if !strings.Contains(contentStr, tc.expected) {
-				t.Errorf("%s: %q not found in generated code", tc.message, tc.expected)
+			if !strings.Contains(blogPostStr, tc.expected) {
+				t.Errorf("%s: %q not found in generated posts code", tc.message, tc.expected)
+			}
+		})
+	}
+	
+	// Test the blog_tags.go file for tag values
+	expectedBlogTagsTests := []struct {
+		name     string
+		expected string
+		message  string
+	}{
+		{
+			name:     "Tag reference values",
+			expected: "Name: \"Go Programming\"",
+			message:  "Should contain tag values",
+		},
+		{
+			name:     "Second tag reference values",
+			expected: "Name: \"Tutorials\"",
+			message:  "Should contain all tag values",
+		},
+	}
+	
+	// Test the blog_tags.go file
+	for _, tc := range expectedBlogTagsTests {
+		t.Run(tc.name, func(t *testing.T) {
+			if !strings.Contains(blogTagsStr, tc.expected) {
+				t.Errorf("%s: %q not found in generated tags code", tc.message, tc.expected)
 			}
 		})
 	}
@@ -75,5 +97,5 @@ func TestBlogPostsGeneration(t *testing.T) {
 
 func TestCleanup(t *testing.T) {
 	// This runs after all tests to clean up
-	os.Remove("blog_posts.go")
+	os.Remove("blog_generated.go")
 }
