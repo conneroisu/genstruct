@@ -1,0 +1,9 @@
+# Generated Go files
+blog_posts.go
+
+# IDE files
+.idea/
+.vscode/
+
+# Build files
+*.exe
