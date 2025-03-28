@@ -10,7 +10,7 @@ References between structs are established using Go struct tags with the `struct
 type Post struct {
     ID       string    
     TagSlugs []string       // Contains slugs of tags
-    Tags     []Tag     `structgen:"TagSlugs"` // Will be populated based on TagSlugs
+    Tags     []*Tag    `structgen:"TagSlugs"` // Will be populated based on TagSlugs
 }
 ```
 
@@ -23,21 +23,21 @@ When references are resolved, genstruct now generates proper variable references
 
 ```go
 // Instead of duplicating the entire Tag struct:
-Tags: []Tag{Tag{
+Tags: []*Tag{&Tag{
     ID:   "tag-001",
     Name: "Go Programming",
     Slug: "go-programming",
 }},
 
 // It now uses references to pre-generated variables:
-Tags: []Tag{TagGoProgramming, TagTutorials},
+Tags: []*Tag{&TagGoProgramming, &TagTutorials},
 ```
 
 This improves efficiency and maintainability of the generated code.
 
 ## Supported Reference Types
 
-Currently, `genstruct` supports two types of references:
+Currently, `genstruct` supports several types of references (with pointer-based references being the default and recommended approach):
 
 1. **String to Struct**: A string field referencing a single struct
    ```go
@@ -47,11 +47,27 @@ Currently, `genstruct` supports two types of references:
    }
    ```
 
-2. **String Slice to Struct Slice**: A slice of strings referencing a slice of structs
+2. **String to Struct Pointer**: A string field referencing a struct pointer
+   ```go
+   type Post struct {
+       AuthorID string            // Contains an author ID
+       Author   *Author    `structgen:"AuthorID"` // Will be populated from AuthorID
+   }
+   ```
+
+3. **String Slice to Struct Slice**: A slice of strings referencing a slice of structs
    ```go
    type Post struct {
        TagSlugs []string       // Contains slugs of tags
        Tags     []Tag     `structgen:"TagSlugs"` // Will be populated as a slice of Tags
+   }
+   ```
+
+4. **String Slice to Struct Pointer Slice**: A slice of strings referencing a slice of struct pointers (recommended)
+   ```go
+   type Post struct {
+       TagSlugs []string       // Contains slugs of tags
+       Tags     []*Tag    `structgen:"TagSlugs"` // Will be populated as a slice of Tag pointers
    }
    ```
 
@@ -78,7 +94,7 @@ type Post struct {
     ID       string
     Title    string
     TagSlugs []string  // Contains tag slugs
-    Tags     []Tag     `structgen:"TagSlugs"` // Will be populated from TagSlugs
+    Tags     []*Tag    `structgen:"TagSlugs"` // Will be populated from TagSlugs
 }
 
 // Create your datasets

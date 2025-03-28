@@ -9,6 +9,14 @@ import (
 	"github.com/conneroisu/genstruct"
 )
 
+// TestMain ensures we're always in a clean state
+func TestMain(m *testing.M) {
+	// Clean up any leftover generated file before tests run
+	os.Remove("circus_generated.go")
+	code := m.Run()
+	os.Exit(code)
+}
+
 // TestCircusGeneration tests the generation of circus code
 func TestCircusGeneration(t *testing.T) {
 	// Redirect logging to a buffer for testing

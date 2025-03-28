@@ -125,11 +125,20 @@ func main() {
     // Access specific animal
     fmt.Println(zoo.AnimalLeo.Species) // Prints: African Lion
     
-    // Access all animals
+    // Access all animals (which are pointers)
     for _, animal := range zoo.AllAnimals {
         fmt.Printf("%s: %s\n", animal.Name, animal.Species)
     }
+    
+    // Direct access to an animal from the slice
+    fmt.Println(zoo.AllAnimals[0].Name) // Prints: Leo
 }
+```
+
+The generated code will create a slice of pointers:
+
+```go
+var AllAnimals = []*Animal{&AnimalLeo, &AnimalEllie, &AnimalStripes, ...}
 ```
 
 ## Advanced: Using Struct References
@@ -148,7 +157,7 @@ type Post struct {
     ID       string
     Title    string
     TagSlugs []string  // References to tags
-    Tags     []Tag     `structgen:"TagSlugs"` // Will be populated from TagSlugs
+    Tags     []*Tag    `structgen:"TagSlugs"` // Will be populated from TagSlugs
 }
 
 // Create datasets

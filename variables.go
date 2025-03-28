@@ -47,11 +47,12 @@ func (g *Generator) generateSlice(dataValue reflect.Value) {
 		sliceName = fmt.Sprintf("All%ss", g.Config.TypeName)
 	}
 
+	// Generate as pointer slice []*Type with &Var references
 	g.File.Var().Id(
 		sliceName,
 	).Op(
 		"=",
-	).Index().Id(
+	).Index().Op("*").Id(
 		g.Config.TypeName,
 	).ValuesFunc(func(group *jen.Group) {
 		for i := range dataValue.Len() {
@@ -61,7 +62,8 @@ func (g *Generator) generateSlice(dataValue reflect.Value) {
 			identValue := g.getStructIdentifier(elem)
 			varName := g.Config.VarPrefix + slugToIdentifier(identValue)
 
-			group.Id(varName)
+			// Add & operator to create pointer references
+			group.Op("&").Id(varName)
 		}
 	})
 }
