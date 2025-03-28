@@ -43,8 +43,8 @@ func TestBlogPostsGeneration(t *testing.T) {
 		},
 		{
 			name:     "Post slice",
-			expected: "var AllPosts = []Post{",
-			message:  "Should contain AllPosts slice",
+			expected: "var AllPosts = []*Post{",
+			message:  "Should contain AllPosts pointer slice",
 		},
 		{
 			name:     "Has first post with pointer tags",
