@@ -213,9 +213,9 @@ func (g *Generator) generateStructGenField(structValue reflect.Value, srcFieldNa
 	targetType := targetField.Type
 
 	// Check for slice of structs or struct pointers referencing a string slice
-	if targetType.Kind() == reflect.Slice && 
-		((targetType.Elem().Kind() == reflect.Struct) || 
-		(targetType.Elem().Kind() == reflect.Pointer && targetType.Elem().Elem().Kind() == reflect.Struct)) &&
+	if targetType.Kind() == reflect.Slice &&
+		((targetType.Elem().Kind() == reflect.Struct) ||
+			(targetType.Elem().Kind() == reflect.Pointer && targetType.Elem().Elem().Kind() == reflect.Struct)) &&
 		srcField.Type.Kind() == reflect.Slice &&
 		srcField.Type.Elem().Kind() == reflect.String {
 
@@ -224,7 +224,7 @@ func (g *Generator) generateStructGenField(structValue reflect.Value, srcFieldNa
 	}
 
 	// Check for single struct or struct pointer referencing a string
-	if (targetType.Kind() == reflect.Struct || 
+	if (targetType.Kind() == reflect.Struct ||
 		(targetType.Kind() == reflect.Pointer && targetType.Elem().Kind() == reflect.Struct)) &&
 		srcField.Type.Kind() == reflect.String {
 
@@ -262,9 +262,8 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 		// We don't have this reference data
 		if isPointerSlice {
 			return jen.Index().Add(jen.Op("*").Id(structTypeName)).Values()
-		} else {
-			return jen.Index().Add(jen.Id(structTypeName)).Values()
 		}
+		return jen.Index().Add(jen.Id(structTypeName)).Values()
 	}
 
 	// Convert to reflect.Value
@@ -273,9 +272,8 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 		// Reference isn't a slice/array
 		if isPointerSlice {
 			return jen.Index().Add(jen.Op("*").Id(structTypeName)).Values()
-		} else {
-			return jen.Index().Add(jen.Id(structTypeName)).Values()
 		}
+		return jen.Index().Add(jen.Id(structTypeName)).Values()
 	}
 
 	// Create a statement for the appropriate slice type
@@ -287,7 +285,7 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 		// For []T
 		sliceStmt = jen.Index().Add(jen.Id(structTypeName))
 	}
-	
+
 	// Now create a slice with all matching references
 	return sliceStmt.ValuesFunc(func(group *jen.Group) {
 		// For each source ID
@@ -337,7 +335,7 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 func (g *Generator) generateReferenceSingle(srcValue reflect.Value, targetType reflect.Type) *jen.Statement {
 	// Determine if we're dealing with a pointer (*T) or struct (T)
 	isPointer := targetType.Kind() == reflect.Pointer
-	
+
 	// Get the target struct type name
 	var structTypeName string
 	if isPointer {
@@ -352,9 +350,8 @@ func (g *Generator) generateReferenceSingle(srcValue reflect.Value, targetType r
 		// We don't have this reference data
 		if isPointer {
 			return jen.Op("&").Id(structTypeName).Values()
-		} else {
-			return jen.Id(structTypeName).Values()
 		}
+		return jen.Id(structTypeName).Values()
 	}
 
 	// Convert to reflect.Value
@@ -363,9 +360,8 @@ func (g *Generator) generateReferenceSingle(srcValue reflect.Value, targetType r
 		// Reference isn't a slice/array
 		if isPointer {
 			return jen.Op("&").Id(structTypeName).Values()
-		} else {
-			return jen.Id(structTypeName).Values()
 		}
+		return jen.Id(structTypeName).Values()
 	}
 
 	// Get ID value from source
@@ -386,14 +382,13 @@ func (g *Generator) generateReferenceSingle(srcValue reflect.Value, targetType r
 				// Found match - get a name for the referenced variable
 				identValue := g.getStructIdentifier(refStruct)
 				refVarName := structTypeName + slugToIdentifier(identValue)
-				
+
 				// For pointer types, just return a pointer to the existing variable
 				if isPointer {
 					return jen.Op("&").Id(refVarName)
-				} else {
-					// For non-pointer types, return the variable directly
-					return jen.Id(refVarName)
 				}
+				// For non-pointer types, return the variable directly
+				return jen.Id(refVarName)
 			}
 		}
 	}
