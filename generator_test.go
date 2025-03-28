@@ -21,7 +21,7 @@ type Post struct {
 	Title    string
 	Date     time.Time
 	TagSlugs []string
-	Tags     []Tag `structgen:"TagSlugs"`
+	Tags     []*Tag `structgen:"TagSlugs"`
 }
 
 func TestStructReferenceEmbedding(t *testing.T) {
@@ -97,7 +97,7 @@ func TestStructReferenceEmbedding(t *testing.T) {
 	expectedRefs := []string{
 		// Verify use of Tag variables
 		"Tags:",
-		"[]Tag{Tag",
+		"[]*Tag{&Tag",
 	}
 
 	for _, expected := range expectedRefs {
