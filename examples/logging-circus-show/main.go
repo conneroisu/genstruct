@@ -102,7 +102,7 @@ func main() {
 
 	// Create a generator config
 	config := genstruct.Config{
-		PackageName:   "circus",
+		PackageName:   "main",
 		OutputFile:    "circus_generated.go",
 		VarPrefix:     "Circus",
 		ConstantIdent: "Circus",
