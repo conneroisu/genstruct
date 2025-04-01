@@ -12,6 +12,11 @@ import (
 func (g *Generator) generateConstants(dataValue reflect.Value) {
 	// Check if the struct has an ID field
 	firstElem := dataValue.Index(0)
+	// Handle pointer to struct case
+	if firstElem.Kind() == reflect.Pointer {
+		firstElem = firstElem.Elem()
+	}
+	
 	hasIDField := false
 	idFieldName := ""
 
@@ -33,6 +38,11 @@ func (g *Generator) generateConstants(dataValue reflect.Value) {
 	g.File.Const().DefsFunc(func(group *jen.Group) {
 		for i := range dataValue.Len() {
 			elem := dataValue.Index(i)
+			// Handle pointer to struct case
+			if elem.Kind() == reflect.Pointer {
+				elem = elem.Elem()
+			}
+			
 			idField := elem.FieldByName(idFieldName)
 
 			// If there's an ID field that's a string, create a constant

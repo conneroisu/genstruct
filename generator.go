@@ -76,6 +76,9 @@ func NewGenerator(config Config, data any, refs ...any) (*Generator, error) {
 			elemType := refType.Elem()
 			if elemType.Kind() == reflect.Struct {
 				refMap[elemType.Name()] = ref
+			} else if elemType.Kind() == reflect.Pointer && elemType.Elem().Kind() == reflect.Struct {
+				// Handle pointer slice ([]*Type)
+				refMap[elemType.Elem().Name()] = ref
 			} else {
 				refMap[fmt.Sprintf("Ref%d", i)] = ref
 			}
@@ -106,13 +109,18 @@ func enhanceConfig(config Config, data any) (Config, error) {
 	}
 
 	firstElem := dataValue.Index(0)
-	if firstElem.Kind() != reflect.Struct {
-		// Only struct slices are supported, return as is
+	var structType reflect.Type
+	
+	// Support both direct struct slices and pointer slices
+	if firstElem.Kind() == reflect.Struct {
+		structType = firstElem.Type()
+	} else if firstElem.Kind() == reflect.Pointer && firstElem.Elem().Kind() == reflect.Struct {
+		structType = firstElem.Elem().Type()
+	} else {
+		// Only struct or struct pointer slices are supported
 		return config, InvalidTypeError{Kind: firstElem.Kind()}
 	}
-
-	// Get the struct type
-	structType := firstElem.Type()
+	
 	typeName := structType.Name()
 
 	// Infer TypeName if not specified
@@ -213,8 +221,13 @@ func (g *Generator) Generate() error {
 
 	// Get the type of the first element
 	firstElem := dataValue.Index(0)
-	if firstElem.Kind() != reflect.Struct {
-		g.Config.Logger.Error("Invalid element type", "expected", "struct", "got", firstElem.Kind().String())
+	// Support both direct struct slices and pointer slices
+	if firstElem.Kind() == reflect.Struct {
+		// Direct struct - proceed as normal
+	} else if firstElem.Kind() == reflect.Pointer && firstElem.Elem().Kind() == reflect.Struct {
+		// Pointer to struct - also acceptable
+	} else {
+		g.Config.Logger.Error("Invalid element type", "expected", "struct or pointer to struct", "got", firstElem.Kind().String())
 		return InvalidTypeError{firstElem.Kind()}
 	}
 
@@ -240,7 +253,8 @@ func (g *Generator) Generate() error {
 		if refDataValue.Kind() == reflect.Slice || refDataValue.Kind() == reflect.Array {
 			if refDataValue.Len() > 0 {
 				refElem := refDataValue.Index(0)
-				if refElem.Kind() == reflect.Struct {
+				// Support both direct structs and pointer-to-structs
+				if refElem.Kind() == reflect.Struct || (refElem.Kind() == reflect.Pointer && refElem.Elem().Kind() == reflect.Struct) {
 					// Store original config values so we can restore them after
 					// processing this reference type
 					originalTypeName := g.Config.TypeName
@@ -292,6 +306,11 @@ func (g *Generator) Generate() error {
 
 // getStructIdentifier returns a string to identify this struct instance
 func (g *Generator) getStructIdentifier(structValue reflect.Value) string {
+	// Handle pointer to struct case
+	if structValue.Kind() == reflect.Pointer {
+		structValue = structValue.Elem()
+	}
+	
 	// If a custom name function is provided, use it
 	if g.Config.CustomVarNameFn != nil {
 		return g.Config.CustomVarNameFn(structValue)

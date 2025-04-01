@@ -29,7 +29,12 @@ func (g *Generator) getTypeStatement(t reflect.Type) *jen.Statement {
 	case reflect.Complex64, reflect.Complex128:
 		return jen.Id(t.String())
 	case reflect.Array, reflect.Slice:
-		return jen.Index().Add(g.getTypeStatement(t.Elem()))
+		elemType := t.Elem()
+		// Special handling for []*Type pattern
+		if elemType.Kind() == reflect.Pointer {
+			return jen.Index().Add(jen.Op("*").Add(g.getTypeStatement(elemType.Elem())))
+		}
+		return jen.Index().Add(g.getTypeStatement(elemType))
 	case reflect.Map:
 		return jen.Map(
 			g.getTypeStatement(t.Key()),

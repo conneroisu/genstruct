@@ -127,6 +127,11 @@ func (g *Generator) getMapStatement(mapValue reflect.Value) *jen.Statement {
 
 // generateStructValues adds values for a struct to a Dict
 func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.Value) {
+	// Handle pointer to struct case
+	if structValue.Kind() == reflect.Pointer {
+		structValue = structValue.Elem()
+	}
+
 	structType := structValue.Type()
 
 	// Create a Dict for each field in the struct
@@ -295,6 +300,11 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 			// Try to find a matching reference struct
 			for j := range refData.Len() {
 				refStruct := refData.Index(j)
+			
+			// Handle pointer to struct case
+			if refStruct.Kind() == reflect.Pointer {
+				refStruct = refStruct.Elem()
+			}
 
 				// Try each possible identifier field
 				for _, idField := range g.Config.IdentifierFields {
@@ -370,6 +380,11 @@ func (g *Generator) generateReferenceSingle(srcValue reflect.Value, targetType r
 	// Try to find a matching reference struct
 	for j := range refData.Len() {
 		refStruct := refData.Index(j)
+			
+			// Handle pointer to struct case
+			if refStruct.Kind() == reflect.Pointer {
+				refStruct = refStruct.Elem()
+			}
 
 		// Try each possible identifier field
 		for _, idField := range g.Config.IdentifierFields {
