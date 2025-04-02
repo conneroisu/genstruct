@@ -3,7 +3,6 @@ package genstruct
 import (
 	"bytes"
 	"fmt"
-	"go/format"
 	"os"
 	"reflect"
 	"runtime/debug"
@@ -110,7 +109,7 @@ func enhanceConfig(config Config, data any) (Config, error) {
 
 	firstElem := dataValue.Index(0)
 	var structType reflect.Type
-	
+
 	// Support both direct struct slices and pointer slices
 	if firstElem.Kind() == reflect.Struct {
 		structType = firstElem.Type()
@@ -120,7 +119,7 @@ func enhanceConfig(config Config, data any) (Config, error) {
 		// Only struct or struct pointer slices are supported
 		return config, InvalidTypeError{Kind: firstElem.Kind()}
 	}
-	
+
 	typeName := structType.Name()
 
 	// Infer TypeName if not specified
@@ -291,17 +290,17 @@ func (g *Generator) Generate() error {
 		return err
 	}
 
-	// Format the code with gofmt
-	g.Config.Logger.Debug("Formatting generated code")
-	formatted, err := format.Source(buf.Bytes())
-	if err != nil {
-		g.Config.Logger.Error("Failed to format code", "error", err)
-		return err
-	}
-
+	// // Format the code with gofmt
+	// g.Config.Logger.Debug("Formatting generated code")
+	// formatted, err := format.Source(buf.Bytes())
+	// if err != nil {
+	// 	g.Config.Logger.Error("Failed to format code", "error", err)
+	// 	return err
+	// }
+	//
 	// Save the formatted code to file
 	g.Config.Logger.Info("Writing generated code to file", "file", g.Config.OutputFile)
-	return os.WriteFile(g.Config.OutputFile, formatted, 0644)
+	return os.WriteFile(g.Config.OutputFile, buf.Bytes(), 0644)
 }
 
 // getStructIdentifier returns a string to identify this struct instance
@@ -310,7 +309,7 @@ func (g *Generator) getStructIdentifier(structValue reflect.Value) string {
 	if structValue.Kind() == reflect.Pointer {
 		structValue = structValue.Elem()
 	}
-	
+
 	// If a custom name function is provided, use it
 	if g.Config.CustomVarNameFn != nil {
 		return g.Config.CustomVarNameFn(structValue)
