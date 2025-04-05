@@ -221,11 +221,7 @@ func (g *Generator) Generate() error {
 	// Get the type of the first element
 	firstElem := dataValue.Index(0)
 	// Support both direct struct slices and pointer slices
-	if firstElem.Kind() == reflect.Struct {
-		// Direct struct - proceed as normal
-	} else if firstElem.Kind() == reflect.Pointer && firstElem.Elem().Kind() == reflect.Struct {
-		// Pointer to struct - also acceptable
-	} else {
+	if firstElem.Kind() != reflect.Struct && (firstElem.Kind() != reflect.Pointer || firstElem.Elem().Kind() != reflect.Struct) {
 		g.Config.Logger.Error("Invalid element type", "expected", "struct or pointer to struct", "got", firstElem.Kind().String())
 		return InvalidTypeError{firstElem.Kind()}
 	}
@@ -290,14 +286,6 @@ func (g *Generator) Generate() error {
 		return err
 	}
 
-	// // Format the code with gofmt
-	// g.Config.Logger.Debug("Formatting generated code")
-	// formatted, err := format.Source(buf.Bytes())
-	// if err != nil {
-	// 	g.Config.Logger.Error("Failed to format code", "error", err)
-	// 	return err
-	// }
-	//
 	// Save the formatted code to file
 	g.Config.Logger.Info("Writing generated code to file", "file", g.Config.OutputFile)
 	return os.WriteFile(g.Config.OutputFile, buf.Bytes(), 0644)

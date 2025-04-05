@@ -12,7 +12,7 @@ import (
 // TestMain ensures we're always in a clean state
 func TestMain(m *testing.M) {
 	// Clean up any leftover generated file before tests run
-	os.Remove("circus_generated.go")
+	_ = os.Remove("circus_generated.go")
 	code := m.Run()
 	os.Exit(code)
 }
@@ -52,8 +52,18 @@ func TestCircusGeneration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp file: %v", err)
 	}
-	defer os.Remove(tempFile.Name())
-	defer tempFile.Close()
+	defer func() {
+		rErr := os.Remove(tempFile.Name())
+		if rErr != nil {
+			t.Errorf("Failed to remove temp file: %v", rErr)
+		}
+	}()
+
+	defer func() {
+		if err := tempFile.Close(); err != nil {
+			t.Errorf("Failed to close temp file: %v", err)
+		}
+	}()
 
 	// Set up the config
 	config := genstruct.Config{

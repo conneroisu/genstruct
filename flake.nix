@@ -139,8 +139,8 @@
             go_1_24
             air
             pprof
-            revive
-            (buildWithSpecificGo golangci-lint)
+            golangci-lint
+            (buildWithSpecificGo revive)
             (buildWithSpecificGo gopls)
             (buildWithSpecificGo templ)
             (buildWithSpecificGo golines)

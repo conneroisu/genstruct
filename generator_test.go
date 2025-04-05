@@ -107,7 +107,10 @@ func TestStructReferenceEmbedding(t *testing.T) {
 	}
 
 	// Clean up
-	os.Remove("test_posts.go")
+	err = os.Remove("test_posts.go")
+	if err != nil {
+		return
+	}
 }
 
 // TestErrorHandling tests that errors are properly propagated
@@ -118,14 +121,14 @@ func TestErrorHandling(t *testing.T) {
 	if err == nil {
 		t.Error("Expected error for non-slice data, got nil")
 	}
-	
+
 	// Test with empty slice
 	emptySlice := []string{}
 	_, err = NewGenerator(Config{PackageName: "test"}, emptySlice)
 	if err == nil {
 		t.Error("Expected error for empty slice, got nil")
 	}
-	
+
 	// Test with non-struct slice
 	stringSlice := []string{"not", "a", "struct"}
 	_, err = NewGenerator(Config{PackageName: "test"}, stringSlice)
@@ -158,28 +161,28 @@ func TestConfigInference(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error creating generator with minimal config: %v", err)
 	}
-	
+
 	// Check that values were properly inferred
 	if generator.Config.TypeName != "Person" {
 		t.Errorf("Expected TypeName to be 'Person', got %q", generator.Config.TypeName)
 	}
-	
+
 	if generator.Config.ConstantIdent != "Person" {
 		t.Errorf("Expected ConstantIdent to be 'Person', got %q", generator.Config.ConstantIdent)
 	}
-	
+
 	if generator.Config.VarPrefix != "Person" {
 		t.Errorf("Expected VarPrefix to be 'Person', got %q", generator.Config.VarPrefix)
 	}
-	
+
 	if generator.Config.OutputFile != "person_generated.go" {
 		t.Errorf("Expected OutputFile to be 'person_generated.go', got %q", generator.Config.OutputFile)
 	}
-	
+
 	if len(generator.Config.IdentifierFields) == 0 {
 		t.Error("Expected IdentifierFields to be set with defaults")
 	}
-	
+
 	// Test that specified values are not overridden
 	customConfig := Config{
 		PackageName:      "custom",
@@ -189,21 +192,22 @@ func TestConfigInference(t *testing.T) {
 		OutputFile:       "custom_output.go",
 		IdentifierFields: []string{"Name", "ID"},
 	}
-	
+
 	customGenerator, err := NewGenerator(customConfig, people)
 	if err != nil {
 		t.Fatalf("Error creating generator with custom config: %v", err)
 	}
-	
+
 	if customGenerator.Config.TypeName != "CustomPerson" {
 		t.Errorf("Expected TypeName to be 'CustomPerson', got %q", customGenerator.Config.TypeName)
 	}
-	
+
 	if customGenerator.Config.ConstantIdent != "CPerson" {
 		t.Errorf("Expected ConstantIdent to be 'CPerson', got %q", customGenerator.Config.ConstantIdent)
 	}
-	
+
 	if customGenerator.Config.OutputFile != "custom_output.go" {
 		t.Errorf("Expected OutputFile to be 'custom_output.go', got %q", customGenerator.Config.OutputFile)
 	}
 }
+

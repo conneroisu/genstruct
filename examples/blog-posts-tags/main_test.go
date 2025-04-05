@@ -20,7 +20,7 @@ func TestBlogPostsGeneration(t *testing.T) {
 	}
 
 	contentStr := string(content)
-	
+
 	// For compatibility with test, derive blog post and tags content from the single file
 	blogPostStr := contentStr
 	blogTagsStr := contentStr
@@ -66,7 +66,7 @@ func TestBlogPostsGeneration(t *testing.T) {
 			}
 		})
 	}
-	
+
 	// Test the blog_tags.go file for tag values
 	expectedBlogTagsTests := []struct {
 		name     string
@@ -89,7 +89,7 @@ func TestBlogPostsGeneration(t *testing.T) {
 			message:  "Should contain RelatedTags pointer field",
 		},
 	}
-	
+
 	// Test the blog_tags.go file
 	for _, tc := range expectedBlogTagsTests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -102,5 +102,9 @@ func TestBlogPostsGeneration(t *testing.T) {
 
 func TestCleanup(t *testing.T) {
 	// This runs after all tests to clean up
-	os.Remove("blog_generated.go")
+	err := os.Remove("blog_generated.go")
+	if err != nil {
+		t.Fatalf("Error removing blog_generated.go file: %v", err)
+	}
 }
+

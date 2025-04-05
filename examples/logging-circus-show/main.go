@@ -134,8 +134,7 @@ func createCustomLogger() *slog.Logger {
 	// Get the current verbosity level from flags
 
 	// Determine log level
-	var level slog.Level
-	level = slog.LevelDebug
+	var level = slog.LevelDebug
 
 	// Create a handler with custom attributes for the circus show
 	h := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
