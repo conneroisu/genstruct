@@ -287,7 +287,7 @@ func (g *Generator) Generate() error {
 	}
 
 	// Save the formatted code to file
-	g.Config.Logger.Info("Writing generated code to file", "file", g.Config.OutputFile)
+	g.Config.Logger.Debug("Writing generated code to file", "file", g.Config.OutputFile)
 	return os.WriteFile(g.Config.OutputFile, buf.Bytes(), 0644)
 }
 
