@@ -75,7 +75,8 @@ func NewGenerator(config Config, data any, refs ...any) (*Generator, error) {
 			elemType := refType.Elem()
 			if elemType.Kind() == reflect.Struct {
 				refMap[elemType.Name()] = ref
-			} else if elemType.Kind() == reflect.Pointer && elemType.Elem().Kind() == reflect.Struct {
+			} else if elemType.Kind() == reflect.Pointer &&
+				elemType.Elem().Kind() == reflect.Struct {
 				// Handle pointer slice ([]*Type)
 				refMap[elemType.Elem().Name()] = ref
 			} else {
@@ -144,7 +145,14 @@ func enhanceConfig(config Config, data any) (Config, error) {
 
 	// Set default identifier fields if none provided
 	if config.IdentifierFields == nil {
-		config.IdentifierFields = []string{"ID", "Name", "Slug", "Title", "Key", "Code"}
+		config.IdentifierFields = []string{
+			"ID",
+			"Name",
+			"Slug",
+			"Title",
+			"Key",
+			"Code",
+		}
 	}
 
 	// If PackageName is not specified, use "generated"
@@ -208,7 +216,13 @@ func (g *Generator) Generate() error {
 	dataValue := reflect.ValueOf(g.Data)
 	if dataValue.Kind() != reflect.Slice &&
 		dataValue.Kind() != reflect.Array {
-		g.Config.Logger.Error("Invalid data type", "expected", "slice or array", "got", dataValue.Kind().String())
+		g.Config.Logger.Error(
+			"Invalid data type",
+			"expected",
+			"slice or array",
+			"got",
+			dataValue.Kind().String(),
+		)
 		return NonSliceOrArrayError{dataValue.Kind()}
 	}
 
@@ -221,25 +235,41 @@ func (g *Generator) Generate() error {
 	// Get the type of the first element
 	firstElem := dataValue.Index(0)
 	// Support both direct struct slices and pointer slices
-	if firstElem.Kind() == reflect.Struct {
-		// Direct struct - proceed as normal
-	} else if firstElem.Kind() == reflect.Pointer && firstElem.Elem().Kind() == reflect.Struct {
-		// Pointer to struct - also acceptable
-	} else {
-		g.Config.Logger.Error("Invalid element type", "expected", "struct or pointer to struct", "got", firstElem.Kind().String())
+	if firstElem.Kind() != reflect.Struct && (firstElem.Kind() != reflect.Pointer || firstElem.Elem().Kind() != reflect.Struct) {
+		g.Config.Logger.Error(
+			"Invalid element type",
+			"expected",
+			"struct or pointer to struct",
+			"got",
+			firstElem.Kind().String(),
+		)
 		return InvalidTypeError{firstElem.Kind()}
 	}
 
 	// Generate constants for IDs if there's an ID field
-	g.Config.Logger.Debug("Generating constants", "type", g.Config.TypeName)
+	g.Config.Logger.Debug(
+		"Generating constants",
+		"type",
+		g.Config.TypeName,
+	)
 	g.generateConstants(dataValue)
 
 	// Generate variables for each struct
-	g.Config.Logger.Debug("Generating variables", "type", g.Config.TypeName, "count", dataValue.Len())
+	g.Config.Logger.Debug(
+		"Generating variables",
+		"type",
+		g.Config.TypeName,
+		"count",
+		dataValue.Len(),
+	)
 	g.generateVariables(dataValue)
 
 	// Generate a slice with all structs
-	g.Config.Logger.Debug("Generating slice", "type", g.Config.TypeName)
+	g.Config.Logger.Debug(
+		"Generating slice",
+		"type",
+		g.Config.TypeName,
+	)
 	g.generateSlice(dataValue)
 
 	// Process reference datasets to generate their constants and variables
@@ -253,7 +283,9 @@ func (g *Generator) Generate() error {
 			if refDataValue.Len() > 0 {
 				refElem := refDataValue.Index(0)
 				// Support both direct structs and pointer-to-structs
-				if refElem.Kind() == reflect.Struct || (refElem.Kind() == reflect.Pointer && refElem.Elem().Kind() == reflect.Struct) {
+				if refElem.Kind() == reflect.Struct ||
+					(refElem.Kind() == reflect.Pointer &&
+						refElem.Elem().Kind() == reflect.Struct) {
 					// Store original config values so we can restore them after
 					// processing this reference type
 					originalTypeName := g.Config.TypeName
@@ -290,16 +322,8 @@ func (g *Generator) Generate() error {
 		return err
 	}
 
-	// // Format the code with gofmt
-	// g.Config.Logger.Debug("Formatting generated code")
-	// formatted, err := format.Source(buf.Bytes())
-	// if err != nil {
-	// 	g.Config.Logger.Error("Failed to format code", "error", err)
-	// 	return err
-	// }
-	//
 	// Save the formatted code to file
-	g.Config.Logger.Info("Writing generated code to file", "file", g.Config.OutputFile)
+	g.Config.Logger.Debug("Writing generated code to file", "file", g.Config.OutputFile)
 	return os.WriteFile(g.Config.OutputFile, buf.Bytes(), 0644)
 }
 
