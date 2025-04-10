@@ -1,5 +1,7 @@
 # genstruct
 
+![Logo](./assets/logo.png)
+
 A Go library for generating statically defined Go structs with support for references between structures.
 
 ## Features
