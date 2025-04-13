@@ -110,9 +110,10 @@ func (g *Generator) getMapStatement(mapValue reflect.Value) *jen.Statement {
 	).Add(
 		g.getTypeStatement(mapValue.Type().Elem()),
 	).ValuesFunc(func(group *jen.Group) {
-		// Create a Dict for the map entries
-		dict := jen.Dict{}
-		var key reflect.Value
+		var (
+			dict = jen.Dict{}
+			key  reflect.Value
+		)
 
 		// Add all key-value pairs to the Dict
 		for _, key = range mapValue.MapKeys() {
@@ -127,14 +128,12 @@ func (g *Generator) getMapStatement(mapValue reflect.Value) *jen.Statement {
 
 // generateStructValues adds values for a struct to a Dict
 func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.Value) {
-	// Handle pointer to struct case
 	if structValue.Kind() == reflect.Pointer {
 		structValue = structValue.Elem()
 	}
 
 	structType := structValue.Type()
 
-	// Create a Dict for each field in the struct
 	dict := jen.Dict{}
 
 	// Track fields that need to be processed in a second pass (with structgen tag)
@@ -147,8 +146,10 @@ func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.V
 
 	// First pass: process all regular fields
 	for i := range structValue.NumField() {
-		field := structValue.Field(i)
-		fieldType := structType.Field(i)
+		var (
+			field     = structValue.Field(i)
+			fieldType = structType.Field(i)
+		)
 
 		// Skip unexported fields
 		if !fieldType.IsExported() {
@@ -198,7 +199,11 @@ func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.V
 //   - structValue: The struct instance being processed
 //   - srcFieldName: The name of the source field (from the tag value)
 //   - targetField: The field to populate with references
-func (g *Generator) generateStructGenField(structValue reflect.Value, srcFieldName string, targetField reflect.StructField) *jen.Statement {
+func (g *Generator) generateStructGenField(
+	structValue reflect.Value,
+	srcFieldName string,
+	targetField reflect.StructField,
+) *jen.Statement {
 	structType := structValue.Type()
 
 	// Find the source field
@@ -300,11 +305,11 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 			// Try to find a matching reference struct
 			for j := range refData.Len() {
 				refStruct := refData.Index(j)
-			
-			// Handle pointer to struct case
-			if refStruct.Kind() == reflect.Pointer {
-				refStruct = refStruct.Elem()
-			}
+
+				// Handle pointer to struct case
+				if refStruct.Kind() == reflect.Pointer {
+					refStruct = refStruct.Elem()
+				}
 
 				// Try each possible identifier field
 				for _, idField := range g.Config.IdentifierFields {
@@ -380,11 +385,11 @@ func (g *Generator) generateReferenceSingle(srcValue reflect.Value, targetType r
 	// Try to find a matching reference struct
 	for j := range refData.Len() {
 		refStruct := refData.Index(j)
-			
-			// Handle pointer to struct case
-			if refStruct.Kind() == reflect.Pointer {
-				refStruct = refStruct.Elem()
-			}
+
+		// Handle pointer to struct case
+		if refStruct.Kind() == reflect.Pointer {
+			refStruct = refStruct.Elem()
+		}
 
 		// Try each possible identifier field
 		for _, idField := range g.Config.IdentifierFields {

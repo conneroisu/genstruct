@@ -10,15 +10,17 @@ import (
 
 // generateConstants creates ID constants for each struct if an ID field exists
 func (g *Generator) generateConstants(dataValue reflect.Value) {
+	var (
+		hasIDField  bool
+		idFieldName string
+	)
+
 	// Check if the struct has an ID field
 	firstElem := dataValue.Index(0)
 	// Handle pointer to struct case
 	if firstElem.Kind() == reflect.Pointer {
 		firstElem = firstElem.Elem()
 	}
-	
-	hasIDField := false
-	idFieldName := ""
 
 	// Look for an "ID" field (case insensitive)
 	for i := range firstElem.NumField() {
@@ -42,7 +44,7 @@ func (g *Generator) generateConstants(dataValue reflect.Value) {
 			if elem.Kind() == reflect.Pointer {
 				elem = elem.Elem()
 			}
-			
+
 			idField := elem.FieldByName(idFieldName)
 
 			// If there's an ID field that's a string, create a constant
