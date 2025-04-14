@@ -108,7 +108,7 @@ func TestExportedBlogPostsGeneration(t *testing.T) {
 func TestCleanup(t *testing.T) {
 	// This runs after all tests to clean up
 	// Comment out during development if you want to inspect the generated file
-	outPath := "/home/connerohnesorge/Documents/001Repos/genstruct/examples/exported-blog-posts-tags/out/blog_generated.go"
+	outPath := "./out/blog_generated.go"
 	err := os.Remove(outPath)
 	if err != nil && !os.IsNotExist(err) {
 		t.Fatalf("Error removing blog_generated.go file: %v", err)
