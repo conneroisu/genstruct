@@ -6,9 +6,17 @@ import (
 	"testing"
 )
 
+func getBaseOutputDir() string {
+	baseDir := os.Getenv("BASE_OUTPUT_DIR")
+	if baseDir == "" {
+		baseDir = "./examples/exported-blog-posts-tags"
+	}
+	return baseDir
+}
+
 func TestExportedBlogPostsGeneration(t *testing.T) {
 	// Ensure the output directory exists
-	outDir := "/home/connerohnesorge/Documents/001Repos/genstruct/examples/exported-blog-posts-tags/out"
+	outDir := getBaseOutputDir() + "/out"
 	err := os.MkdirAll(outDir, 0755)
 	if err != nil {
 		t.Fatalf("Error creating output directory: %v", err)
