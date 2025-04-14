@@ -16,7 +16,7 @@ import (
 func generateBlogNetwork() error {
 	// Create a generator with functional options
 	generator := genstruct.NewGenerator(
-		genstruct.WithOutputFile("/home/connerohnesorge/Documents/001Repos/genstruct/examples/exported-blog-network/out/blog_network.go"),
+		genstruct.WithOutputFile("./out/blog_network.go"),
 		genstruct.WithIdentifierFields([]string{"Slug", "Title"}),
 	)
 
@@ -36,7 +36,7 @@ func main() {
 	fmt.Println("Successfully generated blog network data in out/blog_network.go")
 
 	// Show the content of the generated file
-	content, err := os.ReadFile("/home/connerohnesorge/Documents/001Repos/genstruct/examples/exported-blog-network/out/blog_network.go")
+	content, err := os.ReadFile("./out/blog_network.go")
 	if err != nil {
 		fmt.Printf("Error reading generated file: %v\n", err)
 		os.Exit(1)
