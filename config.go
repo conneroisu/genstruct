@@ -11,36 +11,41 @@ import (
 // Many fields are optional and will be automatically inferred if not specified.
 type Config struct {
 	// PackageName defines the target package name
-	// If not provided, defaults to "generated"
+	// If not provided, defaults to the folder name of the containing the output file.
 	PackageName string
 
 	// TypeName is the name of the struct type to generate
 	// If not provided, inferred from the struct type in the data
 	TypeName string
-	
+
 	// ConstantIdent is the prefix for constants (e.g., "Post" for "PostMyPostID")
 	// If not provided, defaults to the TypeName
 	ConstantIdent string
-	
+
 	// VarPrefix is the prefix for variables (e.g., "Post" for "PostMyPost")
 	// If not provided, defaults to the TypeName
 	VarPrefix string
-	
+
 	// OutputFile is the output file name
 	// If not provided, defaults to lowercase(typename_generated.go)
 	OutputFile string
-	
+
 	// IdentifierFields are the fields to try using for naming, in priority order
 	// If not provided, defaults to ["ID", "Name", "Slug", "Title", "Key", "Code"]
 	IdentifierFields []string
-	
+
 	// CustomVarNameFn is a custom function to generate variable names (optional)
 	// If provided, this takes precedence over IdentifierFields
 	CustomVarNameFn func(structValue reflect.Value) string
-	
+
 	// Logger is the slog.Logger instance to use for logging
 	// If not provided, defaults to a no-op logger
 	Logger *slog.Logger
+
+	// ExportDataMode determines if the generator should enable external package references
+	// When true, the generator will import and reference the original package
+	// for the struct type rather than generating a copy in the output package
+	ExportDataMode bool
 }
 
 // slugToIdentifier converts a string to a valid Go identifier

@@ -188,7 +188,7 @@ Configuration is simplified with auto-inference of many values. Here are the ava
 
 | Option | Description | Default | Example |
 |--------|-------------|---------|---------|
-| PackageName | Target package name | `"generated"` | `"models"` |
+| PackageName | Target package name | `"{output-directory}"` | `"models"` |
 | TypeName | Struct type name | *Inferred from data* | `"User"` |
 | ConstantIdent | Prefix for constants | *Same as TypeName* | `"User"` |
 | VarPrefix | Prefix for variables | *Same as TypeName* | `"User"` |

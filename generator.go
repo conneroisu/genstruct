@@ -3,7 +3,9 @@ package genstruct
 import (
 	"bytes"
 	"fmt"
+	"log/slog"
 	"os"
+	"path/filepath"
 	"reflect"
 	"runtime/debug"
 	"strings"
@@ -157,7 +159,7 @@ func enhanceConfig(config Config, data any) (Config, error) {
 
 	// If PackageName is not specified, use "generated"
 	if config.PackageName == "" {
-		config.PackageName = "generated"
+		config.PackageName = GetPackageNameFromPath(config.OutputFile)
 	}
 
 	// If Logger is not specified, use the default logger
@@ -166,12 +168,45 @@ func enhanceConfig(config Config, data any) (Config, error) {
 	}
 
 	// Log the configuration
-	config.Logger.Debug("Configuration enhanced",
-		"typeName", config.TypeName,
-		"packageName", config.PackageName,
-		"outputFile", config.OutputFile)
+	config.Logger.Debug(
+		"Configuration enhanced",
+		slog.String("typeName", config.TypeName),
+		slog.String("packageName", config.PackageName),
+		slog.String("outputFile", config.OutputFile),
+	)
 
 	return config, nil
+}
+
+// GetPackageNameFromPath extracts the containing folder name from a file path
+// This can be used to determine the package name for a given Go file
+// Example: "./out/penguin/gen.go" would return "penguin"
+func GetPackageNameFromPath(filePath string) string {
+	// Clean the path to handle any OS-specific separators and normalize it
+	cleanPath := filepath.Clean(filePath)
+
+	// Get the directory containing the file
+	dir := filepath.Dir(cleanPath)
+
+	// Split the directory path into components
+	components := strings.Split(dir, string(filepath.Separator))
+
+	// The package name is the last component of the directory path
+	// If the path ends with a separator, the last component will be empty
+	if len(components) > 0 {
+		lastComponent := components[len(components)-1]
+		if lastComponent != "" {
+			return lastComponent
+		}
+
+		// If the last component is empty, try the second-to-last one
+		if len(components) > 1 {
+			return components[len(components)-2]
+		}
+	}
+
+	// Default to "main" if we couldn't extract a package name
+	return "main"
 }
 
 // Generate performs the code generation for both primary data and reference data
@@ -187,7 +222,12 @@ func enhanceConfig(config Config, data any) (Config, error) {
 //
 // All generated code is written to a single output file specified in the Config.
 func (g *Generator) Generate() error {
-	g.Config.Logger.Info("Starting code generation", "type", g.Config.TypeName, "output", g.Config.OutputFile)
+	g.Config.Logger.Info(
+		"Starting code generation",
+		slog.String("package", g.Config.PackageName),
+		slog.String("type", g.Config.TypeName),
+		slog.String("output", g.Config.OutputFile),
+	)
 	bi, ok := debug.ReadBuildInfo()
 	if !ok {
 		return fmt.Errorf("failed to read build info for version number")
@@ -275,7 +315,10 @@ func (g *Generator) Generate() error {
 	// Process reference datasets to generate their constants and variables
 	// This ensures that all referenced types (like Tag in Post.Tags) are properly defined
 	// in the generated code, making the references fully usable.
-	g.Config.Logger.Debug("Processing reference datasets", "count", len(g.Refs))
+	g.Config.Logger.Debug(
+		"Processing reference datasets",
+		slog.Int("count", len(g.Refs)),
+	)
 	for typeName, refDataObj := range g.Refs {
 		g.Config.Logger.Debug("Processing reference dataset", "type", typeName)
 		refDataValue := reflect.ValueOf(refDataObj)
