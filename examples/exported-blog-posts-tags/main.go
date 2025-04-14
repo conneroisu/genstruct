@@ -20,7 +20,7 @@ func generateBlogData() error {
 
 	// Configure and generate for both post and tag data in one step
 	// Use absolute path for the output file
-	outPath := "/home/connerohnesorge/Documents/001Repos/genstruct/examples/exported-blog-posts-tags/out/blog_generated.go"
+	outPath := "./out/blog_generated.go"
 	gen := genstruct.NewGenerator(
 		genstruct.WithOutputFile(outPath),
 		genstruct.WithIdentifierFields([]string{"Slug", "ID"}),
