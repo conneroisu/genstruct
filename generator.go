@@ -275,13 +275,13 @@ func (g *Generator) Generate() error {
 	// Get the type of the first element
 	firstElem := dataValue.Index(0)
 	// Support both direct struct slices and pointer slices
-	if firstElem.Kind() != reflect.Struct && (firstElem.Kind() != reflect.Pointer || firstElem.Elem().Kind() != reflect.Struct) {
+	if firstElem.Kind() != reflect.Struct &&
+		(firstElem.Kind() != reflect.Pointer ||
+			firstElem.Elem().Kind() != reflect.Struct) {
 		g.Config.Logger.Error(
 			"Invalid element type",
-			"expected",
-			"struct or pointer to struct",
-			"got",
-			firstElem.Kind().String(),
+			slog.String("expected", "struct or pointer to struct"),
+			slog.String("got", firstElem.Kind().String()),
 		)
 		return InvalidTypeError{firstElem.Kind()}
 	}
@@ -320,9 +320,13 @@ func (g *Generator) Generate() error {
 		slog.Int("count", len(g.Refs)),
 	)
 	for typeName, refDataObj := range g.Refs {
-		g.Config.Logger.Debug("Processing reference dataset", "type", typeName)
+		g.Config.Logger.Debug(
+			"Processing reference dataset",
+			slog.String("type", typeName),
+		)
 		refDataValue := reflect.ValueOf(refDataObj)
-		if refDataValue.Kind() == reflect.Slice || refDataValue.Kind() == reflect.Array {
+		if refDataValue.Kind() == reflect.Slice ||
+			refDataValue.Kind() == reflect.Array {
 			if refDataValue.Len() > 0 {
 				refElem := refDataValue.Index(0)
 				// Support both direct structs and pointer-to-structs
@@ -366,7 +370,10 @@ func (g *Generator) Generate() error {
 	}
 
 	// Save the formatted code to file
-	g.Config.Logger.Debug("Writing generated code to file", "file", g.Config.OutputFile)
+	g.Config.Logger.Debug(
+		"Writing generated code to file",
+		slog.String("file", g.Config.OutputFile),
+	)
 	return os.WriteFile(g.Config.OutputFile, buf.Bytes(), 0644)
 }
 
