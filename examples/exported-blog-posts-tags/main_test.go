@@ -29,7 +29,7 @@ func TestExportedBlogPostsGeneration(t *testing.T) {
 	}
 
 	// Read the generated file
-	outPath := "/home/connerohnesorge/Documents/001Repos/genstruct/examples/exported-blog-posts-tags/out/blog_generated.go"
+	outPath := "./out/blog_generated.go"
 	content, err := os.ReadFile(outPath)
 	if err != nil {
 		t.Fatalf("Error reading blog_generated.go file: %v", err)
