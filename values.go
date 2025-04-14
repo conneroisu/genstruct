@@ -183,7 +183,6 @@ func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.V
 		}
 
 		// Handle embedded fields specially in export mode
-		isExportMode := strings.Contains(g.OutputFile, "/")
 		
 		if fieldType.Anonymous && isExportMode {
 			// For embedded fields in export mode, check if it comes from another package
