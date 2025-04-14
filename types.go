@@ -47,7 +47,7 @@ func (g *Generator) getTypeStatement(t reflect.Type) *jen.Statement {
 		if t.String() == "time.Time" {
 			return jen.Qual("time", "Time")
 		}
-		
+
 		// Check if this is from a different package (has a dot in the name)
 		pkgPath := t.PkgPath()
 		// Infer ExportDataMode by checking if output file contains package path separator

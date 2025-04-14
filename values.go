@@ -72,6 +72,18 @@ func (g *Generator) getValueStatement(value reflect.Value) *jen.Statement {
 				jen.Qual("time", "UTC"),
 			)
 		}
+
+		// Check if this struct is from another package in export mode
+		isExportMode := strings.Contains(g.OutputFile, "/")
+		pkgPath := value.Type().PkgPath()
+
+		if isExportMode && pkgPath != "" && pkgPath != "main" && pkgPath != g.PackageName {
+			// For structs from another package, use fully qualified names
+			return jen.Qual(pkgPath, value.Type().Name()).ValuesFunc(func(group *jen.Group) {
+				g.generateStructValues(group, value)
+			})
+		}
+
 		// For other structs, create a new values block with the struct fields
 		return jen.Id(
 			value.Type().Name(),
@@ -170,8 +182,43 @@ func (g *Generator) generateStructValues(group *jen.Group, structValue reflect.V
 			continue
 		}
 
-		// Add the regular field to the dict
-		dict[jen.Id(fieldType.Name)] = g.getValueStatement(field)
+		// Handle embedded fields specially in export mode
+		isExportMode := strings.Contains(g.OutputFile, "/")
+		if fieldType.Anonymous && isExportMode {
+			// For embedded fields in export mode, check if it comes from another package
+			embeddedType := fieldType.Type
+			pkgPath := embeddedType.PkgPath()
+
+			if pkgPath != "" && pkgPath != "main" && pkgPath != g.PackageName {
+				// Use qualified package reference for embedded fields from other packages
+				// but still generate all the fields inside it
+				dict[jen.Id(fieldType.Name)] = jen.Qual(pkgPath, embeddedType.Name()).ValuesFunc(func(embGroup *jen.Group) {
+					// Generate inner struct values
+					innerDict := jen.Dict{}
+
+					for j := range field.NumField() {
+						innerField := field.Field(j)
+						innerFieldType := field.Type().Field(j)
+
+						// Skip unexported fields
+						if !innerFieldType.IsExported() {
+							continue
+						}
+
+						// Add each field with its value
+						innerDict[jen.Id(innerFieldType.Name)] = g.getValueStatement(innerField)
+					}
+
+					embGroup.Add(innerDict)
+				})
+			} else {
+				// Use regular reference for embedded fields from same package
+				dict[jen.Id(fieldType.Name)] = g.getValueStatement(field)
+			}
+		} else {
+			// Regular field
+			dict[jen.Id(fieldType.Name)] = g.getValueStatement(field)
+		}
 	}
 
 	// Second pass: process fields with structgen tag
@@ -310,7 +357,7 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 
 	// Create a statement for the appropriate slice type
 	var sliceStmt *jen.Statement
-	
+
 	// Use the qualified type if needed
 	if useQualified {
 		if isPointerSlice {

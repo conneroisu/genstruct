@@ -449,6 +449,10 @@ func (g *Generator) Generate(data any, refs ...any) error {
 		}
 	}
 
+	// We no longer need to export embedded types, as they should always use the
+	// pkg-qualified name (e.g., pkg.Embedded) when in export mode
+	// This block is kept empty as a placeholder comment to explain the change
+
 	// Generate the code as a string
 	g.Logger.Debug("Rendering generated code")
 	buf := &bytes.Buffer{}
