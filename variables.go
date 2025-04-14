@@ -16,7 +16,7 @@ func (g *Generator) generateVariables(dataValue reflect.Value) {
 
 		// Determine the variable name using the identifier function
 		identValue := g.getStructIdentifier(elem)
-		varName := g.Config.VarPrefix + slugToIdentifier(identValue)
+		varName := g.VarPrefix + slugToIdentifier(identValue)
 
 		// Get the type to use (may be from another package)
 		var typeStmt *jen.Statement
@@ -32,20 +32,22 @@ func (g *Generator) generateVariables(dataValue reflect.Value) {
 		// If we have a struct type and it comes from a different package, use qualified name
 		if structType != nil {
 			pkgPath := structType.PkgPath()
-			if g.Config.ExportDataMode && pkgPath != "" && pkgPath != "main" && pkgPath != g.Config.PackageName {
-				parts := strings.Split(g.Config.TypeName, ".")
+			// Infer ExportDataMode by checking if output file contains package path separator
+			isExportMode := strings.Contains(g.OutputFile, "/")
+			if isExportMode && pkgPath != "" && pkgPath != "main" && pkgPath != g.PackageName {
+				parts := strings.Split(g.TypeName, ".")
 				if len(parts) > 1 {
 					// If TypeName already has package qualifier (e.g., "pkg.Animal"), use it directly
-					typeStmt = jen.Id(g.Config.TypeName)
+					typeStmt = jen.Id(g.TypeName)
 				} else {
 					// Use package qualification
 					typeStmt = jen.Qual(pkgPath, structType.Name())
 				}
 			} else {
-				typeStmt = jen.Id(g.Config.TypeName)
+				typeStmt = jen.Id(g.TypeName)
 			}
 		} else {
-			typeStmt = jen.Id(g.Config.TypeName)
+			typeStmt = jen.Id(g.TypeName)
 		}
 
 		// Create the variable with its value
@@ -59,22 +61,22 @@ func (g *Generator) generateVariables(dataValue reflect.Value) {
 func (g *Generator) generateSlice(dataValue reflect.Value) {
 	// Determine the slice name - handle both regular and irregular plurals
 	var sliceName string
-	if g.Config.TypeName[len(g.Config.TypeName)-1] == 's' ||
-		g.Config.TypeName[len(g.Config.TypeName)-1] == 'x' ||
-		g.Config.TypeName[len(g.Config.TypeName)-1] == 'z' ||
-		strings.HasSuffix(g.Config.TypeName, "sh") ||
-		strings.HasSuffix(g.Config.TypeName, "ch") {
+	if g.TypeName[len(g.TypeName)-1] == 's' ||
+		g.TypeName[len(g.TypeName)-1] == 'x' ||
+		g.TypeName[len(g.TypeName)-1] == 'z' ||
+		strings.HasSuffix(g.TypeName, "sh") ||
+		strings.HasSuffix(g.TypeName, "ch") {
 		sliceName = fmt.Sprintf(
 			"All%ses",
-			g.Config.TypeName,
+			g.TypeName,
 		)
-	} else if g.Config.TypeName[len(g.Config.TypeName)-1] == 'y' {
+	} else if g.TypeName[len(g.TypeName)-1] == 'y' {
 		sliceName = fmt.Sprintf(
 			"All%sies",
-			g.Config.TypeName[:len(g.Config.TypeName)-1],
+			g.TypeName[:len(g.TypeName)-1],
 		)
 	} else {
-		sliceName = fmt.Sprintf("All%ss", g.Config.TypeName)
+		sliceName = fmt.Sprintf("All%ss", g.TypeName)
 	}
 
 	// Get the type to use (may be from another package)
@@ -95,24 +97,26 @@ func (g *Generator) generateSlice(dataValue reflect.Value) {
 	// If we have a struct type and it comes from a different package, use qualified name
 	if elemType != nil {
 		pkgPath := elemType.PkgPath()
-		if g.Config.ExportDataMode &&
+		// Infer ExportDataMode by checking if output file contains package path separator
+		isExportMode := strings.Contains(g.OutputFile, "/")
+		if isExportMode &&
 			pkgPath != "" &&
 			pkgPath != "main" &&
-			pkgPath != g.Config.PackageName {
+			pkgPath != g.PackageName {
 
-			parts := strings.Split(g.Config.TypeName, ".")
+			parts := strings.Split(g.TypeName, ".")
 			if len(parts) > 1 {
 				// If TypeName already has package qualifier (e.g., "pkg.Animal"), use it directly
-				typeStmt = jen.Id(g.Config.TypeName)
+				typeStmt = jen.Id(g.TypeName)
 			} else {
 				// Use package qualification
 				typeStmt = jen.Qual(pkgPath, elemType.Name())
 			}
 		} else {
-			typeStmt = jen.Id(g.Config.TypeName)
+			typeStmt = jen.Id(g.TypeName)
 		}
 	} else {
-		typeStmt = jen.Id(g.Config.TypeName)
+		typeStmt = jen.Id(g.TypeName)
 	}
 
 	// Generate as pointer slice []*Type with &Var references
@@ -128,7 +132,7 @@ func (g *Generator) generateSlice(dataValue reflect.Value) {
 
 			// Get the variable name using the same method as in generateVariables
 			identValue := g.getStructIdentifier(elem)
-			varName := g.Config.VarPrefix + slugToIdentifier(identValue)
+			varName := g.VarPrefix + slugToIdentifier(identValue)
 
 			// Add & operator to create pointer references
 			group.Op("&").Id(varName)

@@ -35,18 +35,17 @@ animals := []Animal{
     {ID: "tiger-001", Name: "Stripes", Species: "Tiger", Diet: "Carnivore"},
 }
 
-// Configure the generator
-config := genstruct.Config{
-    PackageName:   "zoo",          // Target package name
-    TypeName:      "Animal",       // Struct type name
-    ConstantIdent: "Animal",       // Prefix for constants
-    VarPrefix:     "Animal",       // Prefix for variables
-    OutputFile:    "animals.go",   // Output file path
-}
+// Create a generator with functional options
+generator := genstruct.NewGenerator(
+    genstruct.WithPackageName("zoo"),       // Target package name
+    genstruct.WithTypeName("Animal"),       // Struct type name
+    genstruct.WithConstantIdent("Animal"),  // Prefix for constants
+    genstruct.WithVarPrefix("Animal"),      // Prefix for variables
+    genstruct.WithOutputFile("animals.go"), // Output file path
+)
 
 // Generate the code
-generator := genstruct.NewGenerator(config, animals)
-err := generator.Generate()
+err := generator.Generate(animals)
 ```
 
 ## Struct Reference Embedding
@@ -57,7 +56,7 @@ A powerful feature of genstruct is the ability to automatically populate fields 
 
 1. Define your structs with reference fields
 2. Use the `structgen` tag to specify the source field
-3. Pass additional reference datasets to `NewGenerator`
+3. Pass all datasets to the `Generate` method
 
 ### Example
 
@@ -91,9 +90,14 @@ posts := []Post{
     },
 }
 
+// Create a generator with functional options
+generator := genstruct.NewGenerator(
+    genstruct.WithPackageName("blog"),
+    genstruct.WithOutputFile("blog_generated.go"),
+)
+
 // Generate code with both datasets
-generator := genstruct.NewGenerator(config, posts, tags)
-err := generator.Generate()
+err := generator.Generate(posts, tags)
 ```
 
 The generated code will include:
@@ -107,15 +111,28 @@ The generated code will include:
 
 All of this is generated in a single file, with a single generator call.
 
-## Config Options
+## Configuration Options
 
-- `PackageName`: The package name for the generated file
-- `TypeName`: The name of the struct type
-- `ConstantIdent`: Prefix for generated constants
-- `VarPrefix`: Prefix for generated variables
-- `OutputFile`: The output file path
-- `IdentifierFields`: Fields to use for naming (default: "ID", "Name", "Slug", "Title", "Key", "Code")
-- `CustomVarNameFn`: Optional function to customize variable naming
+Configuration is done through functional options:
+
+- `WithPackageName(name)`: Sets the package name for the generated file
+- `WithTypeName(name)`: Sets the struct type name
+- `WithConstantIdent(name)`: Sets the prefix for generated constants
+- `WithVarPrefix(name)`: Sets the prefix for generated variables  
+- `WithOutputFile(path)`: Sets the output file path
+- `WithIdentifierFields(fields)`: Sets fields to use for naming (default: "ID", "Name", "Slug", "Title", "Key", "Code")
+- `WithCustomVarNameFn(func)`: Sets a custom function to control variable naming
+- `WithLogger(logger)`: Sets a custom slog.Logger instance
+
+Many of these options are automatically inferred if not specified:
+- TypeName: Inferred from the struct type in the data
+- ConstantIdent: Defaults to TypeName if not specified
+- VarPrefix: Defaults to TypeName if not specified
+- OutputFile: Defaults to lowercase(typename_generated.go)
+- IdentifierFields: Uses default fields if not specified
+- Logger: Uses the default logger if not specified
+
+Export mode (referencing types from other packages) is automatically determined based on the output file path. If the path contains directory separators, it will use qualified imports when referencing types from other packages.
 
 ## Dependencies
 

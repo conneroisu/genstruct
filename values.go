@@ -312,7 +312,7 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 				}
 
 				// Try each possible identifier field
-				for _, idField := range g.Config.IdentifierFields {
+				for _, idField := range g.IdentifierFields {
 					refIDField := refStruct.FieldByName(idField)
 
 					if refIDField.IsValid() &&
@@ -392,7 +392,7 @@ func (g *Generator) generateReferenceSingle(srcValue reflect.Value, targetType r
 		}
 
 		// Try each possible identifier field
-		for _, idField := range g.Config.IdentifierFields {
+		for _, idField := range g.IdentifierFields {
 			refIDField := refStruct.FieldByName(idField)
 
 			if refIDField.IsValid() &&

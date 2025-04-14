@@ -50,7 +50,9 @@ func (g *Generator) getTypeStatement(t reflect.Type) *jen.Statement {
 		
 		// Check if this is from a different package (has a dot in the name)
 		pkgPath := t.PkgPath()
-		if pkgPath != "" && pkgPath != "main" && pkgPath != g.Config.PackageName {
+		// Infer ExportDataMode by checking if output file contains package path separator
+		isExportMode := strings.Contains(g.OutputFile, "/")
+		if pkgPath != "" && pkgPath != "main" && pkgPath != g.PackageName && isExportMode {
 			// If the type comes from a different package, reference it with the package name
 			pkgName := t.String()
 			if lastDot := strings.LastIndex(pkgName, "."); lastDot >= 0 {

@@ -47,22 +47,22 @@ func TestStructReferenceEmbedding(t *testing.T) {
 		},
 	}
 
-	// Create config
-	config := Config{
-		PackageName:      "testdata",
-		TypeName:         "Post",
-		ConstantIdent:    "Post",
-		VarPrefix:        "Post",
-		OutputFile:       "test_posts.go",
-		IdentifierFields: []string{"Slug", "ID"},
-	}
+	// Create generator with functional options
+	generator := NewGenerator(
+		WithPackageName("testdata"),
+		WithTypeName("Post"),
+		WithConstantIdent("Post"),
+		WithVarPrefix("Post"),
+		WithOutputFile("test_posts.go"),
+		WithIdentifierFields([]string{"Slug", "ID"}),
+	)
 
-	// Create generator with references
-	generator, err := NewGenerator(config, posts, tags)
+	// Generate will populate Refs
+	err := generator.Generate(posts, tags)
 	if err != nil {
-		t.Fatalf("Error creating generator: %v", err)
+		t.Fatalf("Error generating code: %v", err)
 	}
-
+	
 	// Make sure Refs map is correctly populated
 	if len(generator.Refs) != 1 {
 		t.Errorf("Expected 1 reference type, got %d", len(generator.Refs))
@@ -77,12 +77,6 @@ func TestStructReferenceEmbedding(t *testing.T) {
 	tagRefValue := reflect.ValueOf(tagRef)
 	if tagRefValue.Len() != 3 {
 		t.Errorf("Expected 3 tags in reference data, got %d", tagRefValue.Len())
-	}
-
-	// Generate the code
-	err = generator.Generate()
-	if err != nil {
-		t.Fatalf("Error generating code: %v", err)
 	}
 
 	// Read the generated file
@@ -117,21 +111,24 @@ func TestStructReferenceEmbedding(t *testing.T) {
 func TestErrorHandling(t *testing.T) {
 	// Test with non-slice data
 	nonSliceData := "not a slice"
-	_, err := NewGenerator(Config{PackageName: "test"}, nonSliceData)
+	generator := NewGenerator(WithPackageName("test"))
+	err := generator.Generate(nonSliceData)
 	if err == nil {
 		t.Error("Expected error for non-slice data, got nil")
 	}
 
 	// Test with empty slice
 	emptySlice := []string{}
-	_, err = NewGenerator(Config{PackageName: "test"}, emptySlice)
+	generator = NewGenerator(WithPackageName("test"))
+	err = generator.Generate(emptySlice)
 	if err == nil {
 		t.Error("Expected error for empty slice, got nil")
 	}
 
 	// Test with non-struct slice
 	stringSlice := []string{"not", "a", "struct"}
-	_, err = NewGenerator(Config{PackageName: "test"}, stringSlice)
+	generator = NewGenerator(WithPackageName("test"))
+	err = generator.Generate(stringSlice)
 	if err == nil {
 		t.Error("Expected error for non-struct slice, got nil")
 	}
@@ -152,92 +149,63 @@ func TestConfigInference(t *testing.T) {
 	}
 
 	// Test with minimal configuration
-	minimalConfig := Config{
-		// Only specify package name, let everything else be inferred
-		PackageName: "testdata",
-	}
-
-	generator, err := NewGenerator(minimalConfig, people)
+	minimalGenerator := NewGenerator(
+		WithPackageName("testdata"),
+	)
+	
+	// Try to infer values from data
+	err := minimalGenerator.inferConfig(people)
 	if err != nil {
-		t.Fatalf("Error creating generator with minimal config: %v", err)
+		t.Fatalf("Error inferring config: %v", err)
 	}
 
 	// Check that values were properly inferred
-	if generator.Config.TypeName != "Person" {
-		t.Errorf("Expected TypeName to be 'Person', got %q", generator.Config.TypeName)
+	if minimalGenerator.TypeName != "Person" {
+		t.Errorf("Expected TypeName to be 'Person', got %q", minimalGenerator.TypeName)
 	}
 
-	if generator.Config.ConstantIdent != "Person" {
-		t.Errorf("Expected ConstantIdent to be 'Person', got %q", generator.Config.ConstantIdent)
+	if minimalGenerator.ConstantIdent != "Person" {
+		t.Errorf("Expected ConstantIdent to be 'Person', got %q", minimalGenerator.ConstantIdent)
 	}
 
-	if generator.Config.VarPrefix != "Person" {
-		t.Errorf("Expected VarPrefix to be 'Person', got %q", generator.Config.VarPrefix)
+	if minimalGenerator.VarPrefix != "Person" {
+		t.Errorf("Expected VarPrefix to be 'Person', got %q", minimalGenerator.VarPrefix)
 	}
 
-	if generator.Config.OutputFile != "person_generated.go" {
-		t.Errorf("Expected OutputFile to be 'person_generated.go', got %q", generator.Config.OutputFile)
+	if minimalGenerator.OutputFile != "person_generated.go" {
+		t.Errorf("Expected OutputFile to be 'person_generated.go', got %q", minimalGenerator.OutputFile)
 	}
 
-	if len(generator.Config.IdentifierFields) == 0 {
+	if len(minimalGenerator.IdentifierFields) == 0 {
 		t.Error("Expected IdentifierFields to be set with defaults")
 	}
 
 	// Test that specified values are not overridden
-	customConfig := Config{
-		PackageName:      "custom",
-		TypeName:         "CustomPerson",
-		ConstantIdent:    "CPerson",
-		VarPrefix:        "Person",
-		OutputFile:       "custom_output.go",
-		IdentifierFields: []string{"Name", "ID"},
-	}
-
-	customGenerator, err := NewGenerator(customConfig, people)
+	customGenerator := NewGenerator(
+		WithPackageName("custom"),
+		WithTypeName("CustomPerson"),
+		WithConstantIdent("CPerson"),
+		WithVarPrefix("Person"),
+		WithOutputFile("custom_output.go"),
+		WithIdentifierFields([]string{"Name", "ID"}),
+	)
+	
+	// Try to infer values from data
+	err = customGenerator.inferConfig(people)
 	if err != nil {
-		t.Fatalf("Error creating generator with custom config: %v", err)
+		t.Fatalf("Error inferring config: %v", err)
 	}
 
-	if customGenerator.Config.TypeName != "CustomPerson" {
-		t.Errorf("Expected TypeName to be 'CustomPerson', got %q", customGenerator.Config.TypeName)
+	if customGenerator.TypeName != "CustomPerson" {
+		t.Errorf("Expected TypeName to be 'CustomPerson', got %q", customGenerator.TypeName)
 	}
 
-	if customGenerator.Config.ConstantIdent != "CPerson" {
-		t.Errorf("Expected ConstantIdent to be 'CPerson', got %q", customGenerator.Config.ConstantIdent)
+	if customGenerator.ConstantIdent != "CPerson" {
+		t.Errorf("Expected ConstantIdent to be 'CPerson', got %q", customGenerator.ConstantIdent)
 	}
 
-	if customGenerator.Config.OutputFile != "custom_output.go" {
-		t.Errorf("Expected OutputFile to be 'custom_output.go', got %q", customGenerator.Config.OutputFile)
+	if customGenerator.OutputFile != "custom_output.go" {
+		t.Errorf("Expected OutputFile to be 'custom_output.go', got %q", customGenerator.OutputFile)
 	}
 }
 
-func Test_enhanceConfig(t *testing.T) {
-	tests := []struct {
-		name string // description of this test case
-		// Named input parameters for target function.
-		config  Config
-		data    any
-		want    Config
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, gotErr := enhanceConfig(tt.config, tt.data)
-			if gotErr != nil {
-				if !tt.wantErr {
-					t.Errorf("enhanceConfig() failed: %v", gotErr)
-				}
-				return
-			}
-			if tt.wantErr {
-				t.Fatal("enhanceConfig() succeeded unexpectedly")
-			}
-			// TODO: update the condition below to compare got with tt.want.
-			if true {
-				t.Errorf("enhanceConfig() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}

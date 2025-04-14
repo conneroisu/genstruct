@@ -54,13 +54,13 @@ func (g *Generator) generateConstants(dataValue reflect.Value) {
 				idValue := idField.String()
 				// If ID is empty, generate one
 				if idValue == "" {
-					idValue = fmt.Sprintf("%s-%d", strings.ToLower(g.Config.TypeName), i+1)
+					idValue = fmt.Sprintf("%s-%d", strings.ToLower(g.TypeName), i+1)
 				}
 
 				// Get a name for the constant based on the struct
 				identValue := g.getStructIdentifier(elem)
 
-				constName := g.Config.ConstantIdent + slugToIdentifier(identValue) + "ID"
+				constName := g.ConstantIdent + slugToIdentifier(identValue) + "ID"
 				group.Id(constName).Op("=").Lit(idValue)
 			}
 		}

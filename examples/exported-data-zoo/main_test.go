@@ -5,7 +5,6 @@
 package main_test
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
@@ -18,25 +17,19 @@ import (
 func generateAnimalData() error {
 	// Define our array of animal data
 
-	// Configure genstruct
-	config := genstruct.Config{
-		PackageName:      "out",                       // Target package name
-		TypeName:         "Animal",                    // The struct type name
-		ConstantIdent:    "Animal",                    // Prefix for constants
-		VarPrefix:        "Animal",                    // Prefix for variables
-		OutputFile:       "out/zoo_animals.go",        // Output file name (relative to test directory)
-		IdentifierFields: []string{"Name", "Species"}, // Fields to use for naming variables
-		ExportDataMode:   true,                        // Enable referencing types from other packages
-	}
+	// Create a generator with functional options
+	// Note: ExportDataMode is inferred automatically from the output file path
+	generator := genstruct.NewGenerator(
+		genstruct.WithPackageName("out"),                      // Target package name
+		genstruct.WithTypeName("Animal"),                      // The struct type name
+		genstruct.WithConstantIdent("Animal"),                 // Prefix for constants
+		genstruct.WithVarPrefix("Animal"),                     // Prefix for variables
+		genstruct.WithOutputFile("out/zoo_animals.go"),        // Output file name (relative to test directory)
+		genstruct.WithIdentifierFields([]string{"Name", "Species"}), // Fields to use for naming variables
+	)
 
-	// Create a new generator with our config and animal data
-	generator, err := genstruct.NewGenerator(config, pkg.Animals)
-	if err != nil {
-		return fmt.Errorf("error creating generator: %w", err)
-	}
-
-	// Generate the code
-	return generator.Generate()
+	// Generate the code, passing animals data
+	return generator.Generate(pkg.Animals)
 }
 func TestExportedDataZoo(t *testing.T) {
 	// Generate the animal data

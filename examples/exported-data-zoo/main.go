@@ -16,21 +16,15 @@ import (
 func generateAnimalData() error {
 	// Define our array of animal data
 
-	// Configure genstruct
-	config := genstruct.Config{
-		OutputFile:       "./out/zoo_animals.go",      // Output file name (absolute path from project root)
-		IdentifierFields: []string{"Name", "Species"}, // Fields to use for naming variables
-		ExportDataMode:   true,                        // Enable referencing types from other packages
-	}
+	// Create a generator with functional options
+	// Note: ExportDataMode is inferred automatically from the output file path
+	generator := genstruct.NewGenerator(
+		genstruct.WithOutputFile("./out/zoo_animals.go"),       // Output file name (absolute path from project root)
+		genstruct.WithIdentifierFields([]string{"Name", "Species"}), // Fields to use for naming variables
+	)
 
-	// Create a new generator with our config and animal data
-	generator, err := genstruct.NewGenerator(config, pkg.Animals)
-	if err != nil {
-		return fmt.Errorf("error creating generator: %w", err)
-	}
-
-	// Generate the code
-	return generator.Generate()
+	// Generate the code, passing animals data
+	return generator.Generate(pkg.Animals)
 }
 
 func main() {

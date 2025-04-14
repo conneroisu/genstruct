@@ -87,16 +87,14 @@ func generateBlogData() error {
 	}
 
 	// Configure and generate for both post and tag data in one step
-	genConfig := genstruct.Config{
-		PackageName:      "main",
-		OutputFile:       "blog_generated.go",
-		IdentifierFields: []string{"Slug", "ID"},
-	}
-	gen, err := genstruct.NewGenerator(genConfig, posts, tags)
-	if err != nil {
-		return fmt.Errorf("error creating generator: %w", err)
-	}
-	err = gen.Generate()
+	gen := genstruct.NewGenerator(
+		genstruct.WithPackageName("main"),
+		genstruct.WithOutputFile("blog_generated.go"),
+		genstruct.WithIdentifierFields([]string{"Slug", "ID"}),
+	)
+	
+	// Generate code - this is where we pass the actual data
+	err := gen.Generate(posts, tags)
 	if err != nil {
 		return fmt.Errorf("error generating: %w", err)
 	}

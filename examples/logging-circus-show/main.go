@@ -100,26 +100,19 @@ func main() {
 		},
 	}
 
-	// Create a generator config
-	config := genstruct.Config{
-		PackageName:   "main",
-		OutputFile:    "circus_generated.go",
-		VarPrefix:     "Circus",
-		ConstantIdent: "Circus",
-		Logger:        createCustomLogger(), // Use our custom logger for demonstration
-	}
+	// Create a generator with functional options
+	logger.Info("Creating generator with functional options")
+	generator := genstruct.NewGenerator(
+		genstruct.WithPackageName("main"),
+		genstruct.WithOutputFile("circus_generated.go"),
+		genstruct.WithVarPrefix("Circus"),
+		genstruct.WithConstantIdent("Circus"),
+		genstruct.WithLogger(createCustomLogger()), // Use our custom logger for demonstration
+	)
 
-	// Create a new generator with our config and data
-	logger.Info("Creating generator with performers and tricks")
-	generator, err := genstruct.NewGenerator(config, performers, tricks)
-	if err != nil {
-		logger.Error("Failed to create generator", "error", err)
-		return
-	}
-
-	// Generate the code
-	logger.Info("Generating code", "output", config.OutputFile)
-	err = generator.Generate()
+	// Generate the code, passing performers and tricks
+	logger.Info("Generating code", "output", "circus_generated.go")
+	err := generator.Generate(performers, tricks)
 	if err != nil {
 		logger.Error("Failed to generate code", "error", err)
 		return

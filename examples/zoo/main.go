@@ -82,24 +82,18 @@ func generateAnimalData() error {
 		},
 	}
 
-	// Configure genstruct
-	config := genstruct.Config{
-		PackageName:      "main",                      // Target package name
-		TypeName:         "Animal",                    // The struct type name
-		ConstantIdent:    "Animal",                    // Prefix for constants
-		VarPrefix:        "Animal",                    // Prefix for variables
-		OutputFile:       "zoo_animals.go",            // Output file name
-		IdentifierFields: []string{"Name", "Species"}, // Fields to use for naming variables
-	}
+	// Create a generator with functional options
+	generator := genstruct.NewGenerator(
+		genstruct.WithPackageName("main"),               // Target package name
+		genstruct.WithTypeName("Animal"),                // The struct type name
+		genstruct.WithConstantIdent("Animal"),           // Prefix for constants
+		genstruct.WithVarPrefix("Animal"),               // Prefix for variables
+		genstruct.WithOutputFile("zoo_animals.go"),      // Output file name
+		genstruct.WithIdentifierFields([]string{"Name", "Species"}), // Fields to use for naming variables
+	)
 
-	// Create a new generator with our config and animal data
-	generator, err := genstruct.NewGenerator(config, animals)
-	if err != nil {
-		return fmt.Errorf("error creating generator: %w", err)
-	}
-
-	// Generate the code
-	return generator.Generate()
+	// Generate the code, passing animals data
+	return generator.Generate(animals)
 }
 
 func main() {
