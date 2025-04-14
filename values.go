@@ -3,6 +3,7 @@ package genstruct
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/dave/jennifer/jen"
@@ -266,12 +267,27 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 		structTypeName = targetType.Elem().Name()
 	}
 
+	// Check if we need to use fully qualified type references
+	isExportMode := strings.Contains(g.OutputFile, "/")
+	refType := targetType.Elem()
+	if isPointerSlice {
+		refType = refType.Elem()
+	}
+	pkgPath := refType.PkgPath()
+	useQualified := isExportMode && pkgPath != "" && pkgPath != "main" && pkgPath != g.PackageName
+
 	// Check if we have this reference type
 	refDataObj, hasRef := g.Refs[structTypeName]
 	if !hasRef {
 		// We don't have this reference data
 		if isPointerSlice {
+			if useQualified {
+				return jen.Index().Add(jen.Op("*").Qual(pkgPath, structTypeName)).Values()
+			}
 			return jen.Index().Add(jen.Op("*").Id(structTypeName)).Values()
+		}
+		if useQualified {
+			return jen.Index().Add(jen.Qual(pkgPath, structTypeName)).Values()
 		}
 		return jen.Index().Add(jen.Id(structTypeName)).Values()
 	}
@@ -281,19 +297,38 @@ func (g *Generator) generateReferenceSlice(srcValue reflect.Value, targetType re
 	if refData.Kind() != reflect.Slice && refData.Kind() != reflect.Array {
 		// Reference isn't a slice/array
 		if isPointerSlice {
+			if useQualified {
+				return jen.Index().Add(jen.Op("*").Qual(pkgPath, structTypeName)).Values()
+			}
 			return jen.Index().Add(jen.Op("*").Id(structTypeName)).Values()
+		}
+		if useQualified {
+			return jen.Index().Add(jen.Qual(pkgPath, structTypeName)).Values()
 		}
 		return jen.Index().Add(jen.Id(structTypeName)).Values()
 	}
 
 	// Create a statement for the appropriate slice type
 	var sliceStmt *jen.Statement
-	if isPointerSlice {
-		// For []*T
-		sliceStmt = jen.Index().Add(jen.Op("*").Id(structTypeName))
+	
+	// Use the qualified type if needed
+	if useQualified {
+		if isPointerSlice {
+			// For []*pkg.T
+			sliceStmt = jen.Index().Add(jen.Op("*").Qual(pkgPath, structTypeName))
+		} else {
+			// For []pkg.T
+			sliceStmt = jen.Index().Add(jen.Qual(pkgPath, structTypeName))
+		}
 	} else {
-		// For []T
-		sliceStmt = jen.Index().Add(jen.Id(structTypeName))
+		// Regular non-exported mode
+		if isPointerSlice {
+			// For []*T
+			sliceStmt = jen.Index().Add(jen.Op("*").Id(structTypeName))
+		} else {
+			// For []T
+			sliceStmt = jen.Index().Add(jen.Id(structTypeName))
+		}
 	}
 
 	// Now create a slice with all matching references
