@@ -20,7 +20,63 @@ type Generator struct {
 	Data   any            // The primary array of structs to generate code for
 	Refs   map[string]any // Additional arrays that can be referenced
 	File   *jen.File
+
+	// Dynamic Opts
+
+	PackageName      string
+	TypeName         string
+	ConstantIdent    string
+	VarPrefix        string
+	OutputFile       string
+	IdentifierFields []string
+	CustomVarNameFn  func(structValue reflect.Value) string
+	Logger           *slog.Logger
 }
+
+// Option is a functional option for customizing the generator.
+type Option func(g *Generator)
+
+// WithPackageName sets the package name for the generated code.
+func WithPackageName(name string) Option {
+	return func(g *Generator) { g.PackageName = name }
+}
+
+// WithTypeName sets the type name for the generated code.
+func WithTypeName(name string) Option {
+	return func(g *Generator) { g.TypeName = name }
+}
+
+// WithConstantIdent sets the constant identifier for the generated code.
+func WithConstantIdent(name string) Option {
+	return func(g *Generator) { g.ConstantIdent = name }
+}
+
+// WithVarPrefix sets the variable prefix for the generated code.
+func WithVarPrefix(name string) Option {
+	return func(g *Generator) { g.VarPrefix = name }
+}
+
+// WithOutputFile sets the output file name for the generated code.
+func WithOutputFile(name string) Option {
+	return func(g *Generator) { g.OutputFile = name }
+}
+
+// WithIdentifierFields sets the identifier fields for the generated code.
+func WithIdentifierFields(fields []string) Option {
+	return func(g *Generator) { g.IdentifierFields = fields }
+}
+
+// WithCustomVarNameFn sets the custom variable name function for the generated code.
+func WithCustomVarNameFn(fn func(structValue reflect.Value) string) Option {
+	return func(g *Generator) { g.CustomVarNameFn = fn }
+}
+
+// WithLogger sets the logger for the generated code.
+func WithLogger(logger *slog.Logger) Option {
+	return func(g *Generator) { g.Logger = logger }
+}
+
+//
 
 // NewGenerator creates a new generator instance with support for struct references
 //
