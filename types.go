@@ -47,7 +47,7 @@ func (g *Generator) getTypeStatement(t reflect.Type) *jen.Statement {
 		if t.String() == "time.Time" {
 			return jen.Qual("time", "Time")
 		}
-		
+
 		// Check if this is from a different package (has a dot in the name)
 		pkgPath := t.PkgPath()
 		// Infer ExportDataMode by checking if output file contains package path separator
@@ -71,90 +71,4 @@ func (g *Generator) getTypeStatement(t reflect.Type) *jen.Statement {
 	default:
 		return jen.Id(t.String())
 	}
-}
-
-// collectEmbeddedTypes finds all embedded struct types in a given struct type
-// and adds them to the exportedTypes map
-func (g *Generator) collectEmbeddedTypes(structType reflect.Type, exportedTypes map[string]reflect.Type) {
-	if structType.Kind() == reflect.Pointer {
-		structType = structType.Elem()
-	}
-	
-	if structType.Kind() != reflect.Struct {
-		return
-	}
-	
-	// Check each field for embedded structs
-	for i := 0; i < structType.NumField(); i++ {
-		field := structType.Field(i)
-		
-		// If the field is an embedded struct (anonymous field)
-		if field.Anonymous {
-			embeddedType := field.Type
-			if embeddedType.Kind() == reflect.Pointer {
-				embeddedType = embeddedType.Elem()
-			}
-			
-			if embeddedType.Kind() == reflect.Struct {
-				// Add this embedded type to our map if it's not from standard library
-				if embeddedType.PkgPath() != "" && !strings.HasPrefix(embeddedType.PkgPath(), "time") {
-					exportedTypes[embeddedType.Name()] = embeddedType
-					// Recursively check this type for its own embedded types
-					g.collectEmbeddedTypes(embeddedType, exportedTypes)
-				}
-			}
-		}
-	}
-}
-
-// parseTags turns a reflect.StructTag into a map[string]string for jennifer
-func parseTags(tag reflect.StructTag) map[string]string {
-	tagMap := make(map[string]string)
-	
-	// Extract supported tags
-	if yaml, ok := tag.Lookup("yaml"); ok {
-		tagMap["yaml"] = yaml
-	}
-	
-	if structgen, ok := tag.Lookup("structgen"); ok {
-		tagMap["structgen"] = structgen
-	}
-	
-	return tagMap
-}
-
-// exportStructType exports a struct type definition to the generated code
-func (g *Generator) exportStructType(typeName string, structType reflect.Type) {
-	// Create the code block for the struct definition
-	g.File.Type().Id(typeName).StructFunc(func(s *jen.Group) {
-		for i := 0; i < structType.NumField(); i++ {
-			field := structType.Field(i)
-			
-			// Skip unexported fields
-			if !field.IsExported() {
-				continue
-			}
-			
-			// Handle embedded structs (anonymous fields)
-			if field.Anonymous {
-				if field.Type.Kind() == reflect.Pointer {
-					s.Op("*").Id(field.Type.Elem().Name())
-				} else {
-					s.Id(field.Type.Name())
-				}
-				continue
-			}
-			
-			// Regular field with type
-			fieldDef := jen.Id(field.Name).Add(g.getTypeStatement(field.Type))
-			
-			// Add tags if present
-			tagMap := parseTags(field.Tag)
-			if len(tagMap) > 0 {
-				fieldDef.Tag(tagMap)
-			}
-			
-			s.Add(fieldDef)
-		}
-	})
 }
