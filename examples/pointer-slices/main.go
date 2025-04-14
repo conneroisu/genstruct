@@ -100,17 +100,15 @@ func generateArticlesData() error {
 		},
 	}
 
-	// Configure and generate the code
-	genConfig := genstruct.Config{
-		PackageName:      "main",
-		OutputFile:       "articles_generated.go",
-		IdentifierFields: []string{"ID", "Slug"},
-	}
-	gen, err := genstruct.NewGenerator(genConfig, articles, authors, comments)
-	if err != nil {
-		return fmt.Errorf("error creating generator: %w", err)
-	}
-	err = gen.Generate()
+	// Create a generator with functional options
+	gen := genstruct.NewGenerator(
+		genstruct.WithPackageName("main"),
+		genstruct.WithOutputFile("articles_generated.go"),
+		genstruct.WithIdentifierFields([]string{"ID", "Slug"}),
+	)
+	
+	// Generate the code, passing articles, authors, and comments data
+	err := gen.Generate(articles, authors, comments)
 	if err != nil {
 		return fmt.Errorf("error generating: %w", err)
 	}

@@ -2,6 +2,7 @@ package genstruct
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/dave/jennifer/jen"
 )
@@ -45,6 +46,18 @@ func (g *Generator) getTypeStatement(t reflect.Type) *jen.Statement {
 		// Handle special types like time.Time
 		if t.String() == "time.Time" {
 			return jen.Qual("time", "Time")
+		}
+		
+		// Check if this is from a different package (has a dot in the name)
+		pkgPath := t.PkgPath()
+		// Infer ExportDataMode by checking if output file contains package path separator
+		isExportMode := strings.Contains(g.OutputFile, "/")
+		if pkgPath != "" && pkgPath != "main" && pkgPath != g.PackageName && isExportMode {
+			// If the type comes from a different package, reference it with the package name
+			pkgName := t.String()
+			if lastDot := strings.LastIndex(pkgName, "."); lastDot >= 0 {
+				return jen.Qual(pkgPath, t.Name())
+			}
 		}
 		return jen.Id(t.Name())
 	case reflect.Pointer:

@@ -77,7 +77,7 @@ To use struct references:
 
 1. Define your data structures with appropriate reference fields
 2. Add `structgen` tags to fields that should be populated from references
-3. Pass all required datasets to `NewGenerator`
+3. Pass all datasets to the `Generate` method
 
 ### Example
 
@@ -111,32 +111,40 @@ posts := []Post{
     },
 }
 
-// Configure the generation for tags first
-tagConfig := genstruct.Config{
-    PackageName: "main",
-    OutputFile:  "tags.go",
-}
-tagGenerator, err := genstruct.NewGenerator(tagConfig, tags)
+// For separate files approach:
+
+// Create generator for tags
+tagGenerator := genstruct.NewGenerator(
+    genstruct.WithPackageName("main"),
+    genstruct.WithOutputFile("tags.go"),
+)
+
+// Generate tags
+err := tagGenerator.Generate(tags)
 if err != nil {
     // handle error
 }
 
-err = tagGenerator.Generate()
+// Create generator for posts with references to tags
+postGenerator := genstruct.NewGenerator(
+    genstruct.WithPackageName("main"),
+    genstruct.WithOutputFile("posts.go"),
+)
+
+// Generate posts, passing tags as a reference dataset
+err = postGenerator.Generate(posts, tags)
 if err != nil {
     // handle error
 }
 
-// Then generate posts with references to tags
-postConfig := genstruct.Config{
-    PackageName: "main", 
-    OutputFile:  "posts.go",
-}
-generator, err := genstruct.NewGenerator(postConfig, posts, tags)
-if err != nil {
-    // handle error
-}
+// Alternatively, generate everything in one file:
+allInOneGenerator := genstruct.NewGenerator(
+    genstruct.WithPackageName("main"),
+    genstruct.WithOutputFile("blog_data.go"),
+)
 
-err = generator.Generate()
+// Generate both posts and tags in one go
+err = allInOneGenerator.Generate(posts, tags)
 ```
 
 ## How genstruct Finds Matching References
@@ -148,7 +156,7 @@ When looking for matching references, `genstruct` tries each of the identifier f
 3. It tries each identifier field (`ID`, `Name`, `Slug`, etc.) to find a match
 4. When a match is found, that struct is added to the result
 
-The identifier fields are specified in `Config.IdentifierFields`, with a default of `["ID", "Name", "Slug", "Title", "Key", "Code"]`.
+The identifier fields can be set using `WithIdentifierFields`, with a default of `["ID", "Name", "Slug", "Title", "Key", "Code"]`.
 
 ## Edge Cases
 

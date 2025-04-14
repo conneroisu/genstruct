@@ -76,23 +76,17 @@ func main() {
         // Add more animals...
     }
     
-    // Configure genstruct (minimal configuration - many values are inferred automatically)
-    config := genstruct.Config{
-        PackageName: "zoo",        // Target package name
-        OutputFile:  "animals.go", // Output file name
+    // Create generator with functional options
+    // Many values are inferred automatically if not specified
+    generator := genstruct.NewGenerator(
+        genstruct.WithPackageName("zoo"),       // Target package name
+        genstruct.WithOutputFile("animals.go"), // Output file name
         // TypeName, ConstantIdent, and VarPrefix will be inferred as "Animal"
-        // Customize which fields to prioritize for naming
-        IdentifierFields: []string{"Name", "Species"},
-    }
+        genstruct.WithIdentifierFields([]string{"Name", "Species"}), // Prioritize these fields for naming
+    )
     
-    // Create generator
-    generator, err := genstruct.NewGenerator(config, animals)
-    if err != nil {
-        panic(err)
-    }
-    
-    // Generate the code
-    err = generator.Generate()
+    // Generate the code, passing the data
+    err := generator.Generate(animals)
     if err != nil {
         panic(err)
     }
@@ -175,38 +169,44 @@ posts := []Post{
     // More posts...
 }
 
-// Create generator with both datasets
-generator := genstruct.NewGenerator(config, posts, tags)
+// Create generator with functional options
+generator := genstruct.NewGenerator(
+    genstruct.WithPackageName("blog"),
+    genstruct.WithOutputFile("blog_generated.go"),
+)
 
-// Generate code with relationships
-err := generator.Generate()
+// Generate code with relationships by passing both datasets
+err := generator.Generate(posts, tags)
 ```
 
 ## Configuration Options
 
-Configuration is simplified with auto-inference of many values. Here are the available options:
+Configuration is handled through functional options, with auto-inference of many values. Here are the available options:
 
 | Option | Description | Default | Example |
 |--------|-------------|---------|---------|
-| PackageName | Target package name | `"generated"` | `"models"` |
-| TypeName | Struct type name | *Inferred from data* | `"User"` |
-| ConstantIdent | Prefix for constants | *Same as TypeName* | `"User"` |
-| VarPrefix | Prefix for variables | *Same as TypeName* | `"User"` |
-| OutputFile | Output file path | *typename_generated.go* | `"users.go"` |
-| IdentifierFields | Priority fields for naming | `[]string{"ID", "Name", "Slug", "Title", "Key", "Code"}` | `[]string{"ID", "Username"}` |
-| CustomVarNameFn | Custom naming function | *None* | *Custom function* |
+| WithPackageName | Target package name | `"{output-directory}"` | `WithPackageName("models")` |
+| WithTypeName | Struct type name | *Inferred from data* | `WithTypeName("User")` |
+| WithConstantIdent | Prefix for constants | *Same as TypeName* | `WithConstantIdent("User")` |
+| WithVarPrefix | Prefix for variables | *Same as TypeName* | `WithVarPrefix("User")` |
+| WithOutputFile | Output file path | *typename_generated.go* | `WithOutputFile("users.go")` |
+| WithIdentifierFields | Priority fields for naming | `[]string{"ID", "Name", "Slug", "Title", "Key", "Code"}` | `WithIdentifierFields([]string{"ID", "Username"})` |
+| WithCustomVarNameFn | Custom naming function | *None* | `WithCustomVarNameFn(customFunc)` |
+| WithLogger | Custom slog.Logger | *Default logger* | `WithLogger(customLogger)` |
+
+Export mode (referencing types from other packages) is automatically determined based on the output file path. If the path contains directory separators, the generator will use qualified imports when referencing types from other packages.
 
 In many cases, you only need to specify the `PackageName` and `OutputFile` - everything else will be inferred automatically:
 
 ```go
 // Minimal configuration example
-config := genstruct.Config{
-    PackageName: "myapp",
-    OutputFile:  "users_generated.go",
-}
+generator := genstruct.NewGenerator(
+    genstruct.WithPackageName("myapp"),
+    genstruct.WithOutputFile("users_generated.go"),
+)
 
 // The TypeName will be inferred as "User" from the data
-generator, err := genstruct.NewGenerator(config, users)
+err := generator.Generate(users)
 if err != nil {
     // handle error
 }

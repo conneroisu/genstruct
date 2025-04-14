@@ -65,23 +65,17 @@ func TestCircusGeneration(t *testing.T) {
 		}
 	}()
 
-	// Set up the config
-	config := genstruct.Config{
-		PackageName:   "circus_test",
-		OutputFile:    tempFile.Name(),
-		VarPrefix:     "Test",
-		ConstantIdent: "Test",
-		Logger:        logger,
-	}
+	// Create the generator with functional options
+	generator := genstruct.NewGenerator(
+		genstruct.WithPackageName("circus_test"),
+		genstruct.WithOutputFile(tempFile.Name()),
+		genstruct.WithVarPrefix("Test"),
+		genstruct.WithConstantIdent("Test"),
+		genstruct.WithLogger(logger),
+	)
 
-	// Create the generator
-	generator, err := genstruct.NewGenerator(config, performers, tricks)
-	if err != nil {
-		t.Fatalf("Failed to create generator: %v", err)
-	}
-
-	// Generate the code
-	err = generator.Generate()
+	// Generate the code, passing performers and tricks
+	err = generator.Generate(performers, tricks)
 	if err != nil {
 		t.Fatalf("Failed to generate code: %v", err)
 	}
