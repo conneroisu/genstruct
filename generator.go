@@ -243,7 +243,7 @@ func GetPackageNameFromPath(filePath string) string {
 // Generate performs the code generation for both primary data and reference data.
 //
 // Parameters:
-//   - data: The primary array of structs to generate code for
+//   - data: The primary array of structs to generate code for (can be slice, array, or pointer to slice/array)
 //   - refs: Optional additional arrays that can be referenced by the primary data
 //
 // The refs parameters enable struct references via the `structgen` tag. For example,
@@ -271,35 +271,39 @@ func GetPackageNameFromPath(filePath string) string {
 // All generated code is written to a single output file specified in the OutputFile field.
 //
 // Returns an error if:
-//   - The data is not a slice or array
+//   - The data is not a slice, array, or pointer to slice/array
 //   - The data is empty (no elements to analyze)
 //   - The data elements are not structs
 //   - Required fields couldn't be inferred
 func (g *Generator) Generate(data any, refs ...any) error {
-	// Store the data for processing
-	g.Data = data
+	// Handle both direct slices/arrays and pointers to slices/arrays
+	actualData := g.unwrapPointer(data)
+	g.Data = actualData
 	
 	// Create a map of reference datasets
 	g.Refs = make(map[string]any)
 	for i, ref := range refs {
+		// Handle both direct and pointer references
+		actualRef := g.unwrapPointer(ref)
+		
 		// Get type name for this dataset
-		refType := reflect.TypeOf(ref)
+		refType := reflect.TypeOf(actualRef)
 		if refType.Kind() == reflect.Slice || refType.Kind() == reflect.Array {
 			elemType := refType.Elem()
 			if elemType.Kind() == reflect.Struct {
-				g.Refs[elemType.Name()] = ref
+				g.Refs[elemType.Name()] = actualRef
 			} else if elemType.Kind() == reflect.Pointer &&
 				elemType.Elem().Kind() == reflect.Struct {
 				// Handle pointer slice ([]*Type)
-				g.Refs[elemType.Elem().Name()] = ref
+				g.Refs[elemType.Elem().Name()] = actualRef
 			} else {
-				g.Refs[fmt.Sprintf("Ref%d", i)] = ref
+				g.Refs[fmt.Sprintf("Ref%d", i)] = actualRef
 			}
 		}
 	}
 	
-	// Infer config options based on the data
-	if err := g.inferConfig(data); err != nil {
+	// Infer config options based on the actual data
+	if err := g.inferConfig(actualData); err != nil {
 		return err
 	}
 	
@@ -449,6 +453,14 @@ func (g *Generator) Generate(data any, refs ...any) error {
 		}
 	}
 
+	// For exported mode with cross-references between types, we need to add an init function
+	// to break initialization cycles
+	// TODO: Re-enable the init function generation once the syntax issues are fixed
+	// isExportMode := strings.Contains(g.OutputFile, "/")
+	// if isExportMode && len(g.Refs) > 0 {
+	// 	g.generateInitFunction()
+	// }
+
 	// We no longer need to export embedded types, as they should always use the
 	// pkg-qualified name (e.g., pkg.Embedded) when in export mode
 	// This block is kept empty as a placeholder comment to explain the change
@@ -485,6 +497,18 @@ func slugToIdentifier(s string) string {
 
 	return strings.Join(words, "")
 }
+
+// unwrapPointer unwraps a pointer to get the underlying value
+// If the value is not a pointer, it returns the original value
+func (g *Generator) unwrapPointer(value any) any {
+	valueReflect := reflect.ValueOf(value)
+	if valueReflect.Kind() == reflect.Pointer {
+		// Dereference the pointer
+		return valueReflect.Elem().Interface()
+	}
+	return value
+}
+
 
 // getStructIdentifier returns a string to identify this struct instance
 func (g *Generator) getStructIdentifier(structValue reflect.Value) string {

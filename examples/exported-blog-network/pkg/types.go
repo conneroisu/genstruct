@@ -6,11 +6,11 @@ import (
 
 // Embedded is a base struct for all embeddedable structs.
 type Embedded struct {
-	Title           string    `yaml:"title"`
-	Slug            string    `yaml:"slug"`
-	Description     string    `yaml:"description"`
+	Title           string `yaml:"title"`
+	Slug            string `yaml:"slug"`
+	Description     string `yaml:"description"`
 	Content         string
-	BannerPath      string    `yaml:"banner_path"`
+	BannerPath      string `yaml:"banner_path"`
 	RawContent      string
 	Icon            string    `yaml:"icon"`
 	CreatedAt       time.Time `yaml:"created_at"`
@@ -48,36 +48,37 @@ type Employment struct {
 	Embedded
 }
 
-// Sample data for our network
+// Posts is a collection of posts.
 var Posts = []*Post{
 	{
 		Embedded: Embedded{
-			Title:       "Getting Started with Go",
-			Slug:        "getting-started-with-go",
-			Description: "A beginner's guide to Go programming",
-			Content:     "Go is a statically typed compiled language designed at Google...",
-			BannerPath:  "/images/go-banner.jpg",
-			CreatedAt:   time.Date(2023, 5, 15, 10, 0, 0, 0, time.UTC),
-			UpdatedAt:   time.Date(2023, 5, 16, 9, 30, 0, 0, time.UTC),
-			TagSlugs:    []string{"go", "programming", "beginners"},
+			Title:        "Getting Started with Go",
+			Slug:         "getting-started-with-go",
+			Description:  "A beginner's guide to Go programming",
+			Content:      "Go is a statically typed compiled language designed at Google...",
+			BannerPath:   "/images/go-banner.jpg",
+			CreatedAt:    time.Date(2023, 5, 15, 10, 0, 0, 0, time.UTC),
+			UpdatedAt:    time.Date(2023, 5, 16, 9, 30, 0, 0, time.UTC),
+			TagSlugs:     []string{"go", "programming", "beginners"},
 			ProjectSlugs: []string{"go-tutorial"},
 		},
 	},
 	{
 		Embedded: Embedded{
-			Title:       "Advanced Go Concurrency",
-			Slug:        "advanced-go-concurrency",
-			Description: "Deep dive into Go's concurrency model",
-			Content:     "Go's goroutines and channels offer a powerful concurrency model...",
-			BannerPath:  "/images/concurrency-banner.jpg",
-			CreatedAt:   time.Date(2023, 6, 10, 14, 0, 0, 0, time.UTC),
-			UpdatedAt:   time.Date(2023, 6, 12, 11, 45, 0, 0, time.UTC),
-			TagSlugs:    []string{"go", "concurrency", "advanced"},
+			Title:        "Advanced Go Concurrency",
+			Slug:         "advanced-go-concurrency",
+			Description:  "Deep dive into Go's concurrency model",
+			Content:      "Go's goroutines and channels offer a powerful concurrency model...",
+			BannerPath:   "/images/concurrency-banner.jpg",
+			CreatedAt:    time.Date(2023, 6, 10, 14, 0, 0, 0, time.UTC),
+			UpdatedAt:    time.Date(2023, 6, 12, 11, 45, 0, 0, time.UTC),
+			TagSlugs:     []string{"go", "concurrency", "advanced"},
 			ProjectSlugs: []string{"go-tutorial"},
 		},
 	},
 }
 
+// Tags is a list of tags.
 var Tags = []*Tag{
 	{
 		Embedded: Embedded{
@@ -136,6 +137,7 @@ var Tags = []*Tag{
 	},
 }
 
+// Projects is a collection of projects.
 var Projects = []*Project{
 	{
 		Embedded: Embedded{
