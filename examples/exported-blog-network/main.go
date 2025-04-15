@@ -20,8 +20,8 @@ func generateBlogNetwork() error {
 		genstruct.WithIdentifierFields([]string{"Slug", "Title"}),
 	)
 
-	// Generate the code, passing all our data collections
-	return generator.Generate(pkg.Posts, pkg.Tags, pkg.Projects, pkg.Employments)
+	// Generate the code, passing all our data collections as pointers
+	return generator.Generate(&pkg.Posts, &pkg.Tags, &pkg.Projects, &pkg.Employments)
 }
 
 func main() {
